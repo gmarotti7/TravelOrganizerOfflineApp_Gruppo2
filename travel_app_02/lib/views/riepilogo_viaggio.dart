@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:travel_app_02/controllers/riepilogo_viaggio_controller.dart';
+import 'package:travel_app_02/models/spesa.dart';
+import 'package:travel_app_02/models/tappa.dart';
 
 class RiepilogoViaggio extends StatefulWidget {
   final RiepilogoViaggioController controller;
