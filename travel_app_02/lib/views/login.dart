@@ -1,6 +1,7 @@
 // lib/views/login.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:travel_app_02/route.dart'; // Import per accedere ad AppRoutes
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -64,8 +65,10 @@ class _LoginState extends State<Login> {
       setState(() {
         _errorMessage = null;
       });
-      print("Login effettuato con successo! Navigazione...");
-      // Navigator.pushNamed(context, AppRoutes.home);
+      debugPrint("Login effettuato con successo! Navigazione...");
+      
+      // MODIFICA QUI: Sostituisce la schermata attuale con la Home
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
     } else {
       setState(() {
         _errorMessage = "username o password non corretto, riprova";
@@ -85,7 +88,7 @@ class _LoginState extends State<Login> {
               top: 10,
               left: 10,
               child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30), // Modificato solo il colore in bianco
+                icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
                 onPressed: () {
                   Navigator.pop(context); // Torna indietro alla schermata precedente (start)
                 },
@@ -147,7 +150,7 @@ class _LoginState extends State<Login> {
                           _errorMessage!,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                            color: Colors.red, // Corretto in rosso per essere leggibile sul giallo
+                            color: Colors.red,
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                           ),

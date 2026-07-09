@@ -1,6 +1,7 @@
 // lib/views/sign_up.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:travel_app_02/route.dart'; // Import per accedere ad AppRoutes
 
 class SignUp extends StatefulWidget {
   const SignUp({super.key});
@@ -238,7 +239,10 @@ class _SignUp extends State<SignUp> {
                       ElevatedButton(
                         onPressed: () {
                           if (_validaCampi()) {
-                            print("Dati validi! Pronto al salvataggio.");
+                            debugPrint("Dati validi! Pronto al salvataggio.");
+                            
+                            // MODIFICA QUI: Riporta l'utente al Login distruggendo la schermata di registrazione
+                            Navigator.pushReplacementNamed(context, AppRoutes.login);
                           }
                         },
                         style: ElevatedButton.styleFrom(

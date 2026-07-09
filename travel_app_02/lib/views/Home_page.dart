@@ -1,0 +1,320 @@
+// lib/views/home_page.dart
+import 'package:flutter/material.dart';
+import 'BottomBar.dart';
+
+// Modello dati temporaneo per i viaggi
+class Viaggio {
+  final String titolo;
+  final String luogo;
+  final DateTime data;
+
+  Viaggio({
+    required this.titolo,
+    required this.luogo,
+    required this.data,
+  });
+}
+
+class HomePage extends StatefulWidget {
+  const HomePage({super.key}); // 1. RIPULITO: Rimosso il carattere cinese da 'key'
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  // Controller per la barra di ricerca
+  final _searchController = TextEditingController();
+  
+  // Data selezionata tramite il calendario (null se nessun filtro data è attivo)
+  DateTime? _selectedDate;
+
+  // Lista simulata di viaggi (Database temporaneo)
+  final List<Viaggio> _tuttiIViaggi = [
+    Viaggio(titolo: 'Vacanze Estive', luogo: 'Barcellona', data: DateTime(2026, 08, 15)),
+    Viaggio(titolo: 'Capodanno a Londra', luogo: 'Londra', data: DateTime(2027, 01, 01)),
+    Viaggio(titolo: 'Laurea Amo', luogo: 'Salerno', data: DateTime(2026, 03, 10)),
+    Viaggio(titolo: 'Weekend Romantico', luogo: 'Parigi', data: DateTime(2025, 12, 25)),
+  ];
+
+  // Lista che contiene i viaggi filtrati da mostrare sulla UI
+  List<Viaggio> _viaggiFiltrati = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _viaggiFiltrati = _tuttiIViaggi; // All'inizio mostra tutti i viaggi
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  // Funzione unica che unisce il filtro testuale e il filtro data
+  void _applicaFiltri() {
+    String query = _searchController.text.toLowerCase().trim();
+    DateTime oggi = DateTime.now();
+
+    setState(() {
+      _viaggiFiltrati = _tuttiIViaggi.where((viaggio) {
+        // Determina lo stato del viaggio in base alla data attuale
+        String statoViaggio = viaggio.data.isAfter(oggi) ? 'da fare' : 'passato';
+
+        // 1. Controllo Filtro Testuale (Luogo, Stato o Titolo)
+        bool matchTesto = viaggio.luogo.toLowerCase().contains(query) || 
+                          statoViaggio.contains(query) ||
+                          viaggio.titolo.toLowerCase().contains(query);
+
+        // 2. Controllo Filtro Data (se è stata selezionata una data dal calendario)
+        bool matchData = true;
+        if (_selectedDate != null) {
+          matchData = viaggio.data.year == _selectedDate!.year &&
+                    viaggio.data.month == _selectedDate!.month &&
+                    viaggio.data.day == _selectedDate!.day;
+        }
+
+        return matchTesto && matchData;
+      }).toList();
+    });
+  }
+
+  // Funzione per aprire il DatePicker nativo di Flutter
+  Future<void> _selezionaData(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            // 2. CORRETTO: Usiamo dialogTheme con DialogThemeData per evitare l'errore di tipo
+            dialogTheme: DialogThemeData(
+              backgroundColor: Colors.grey[900],
+            ),
+            colorScheme: const ColorScheme.dark(
+              primary: Colors.amber,
+              onPrimary: Colors.black,
+              surface: Colors.black,
+              onSurface: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+      _applicaFiltri();
+    }
+  }
+
+  // Funzione per resettare il filtro della data
+  void _rimuoviFiltroData() {
+    setState(() {
+      _selectedDate = null;
+    });
+    _applicaFiltri();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    DateTime oggi = DateTime.now();
+
+    return Scaffold(
+      backgroundColor: const Color.fromRGBO(225, 170, 5, 1), // Giallo ocra
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // 1. TITOLO IN ALTO AL CENTRO
+              const Center(
+                child: Text(
+                  'I TUOI VIAGGI',
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 20),
+
+              // 2. BARRA DI RICERCA CON LENTE E CALENDARIO
+              TextField(
+                controller: _searchController,
+                onChanged: (value) => _applicaFiltri(),
+                style: const TextStyle(color: Colors.black),
+                decoration: InputDecoration(
+                  fillColor: Colors.white,
+                  filled: true,
+                  hintText: 'LUOGO, DATA, STATO',
+                  hintStyle: const TextStyle(color: Colors.black45, fontWeight: FontWeight.w500),
+                  prefixIcon: const Icon(Icons.search, color: Colors.black),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      Icons.calendar_month, // 3. RIPULITO: Rimosso il carattere cinese da qui
+                      color: _selectedDate == null ? Colors.black : Colors.red,
+                    ),
+                    onPressed: () {
+                      if (_selectedDate == null) {
+                        _selezionaData(context);
+                      } else {
+                        _rimuoviFiltroData();
+                      }
+                    },
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: const BorderSide(color: Colors.black, width: 2),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: const BorderSide(color: Colors.black, width: 2.5),
+                  ),
+                ),
+              ),
+
+              // Indicatore filtro data attivo
+              if (_selectedDate != null) ...[
+                const SizedBox(height: 5),
+                Text(
+                  "Filtro data attivo: ${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}",
+                  style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+              ],
+
+              const SizedBox(height: 25),
+
+              // 3. SEZIONE LISTA VIAGGI (PULSANTI INTERATTIVI)
+              Expanded(
+                child: _viaggiFiltrati.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              "Nessun viaggio trovato",
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+                            ),
+                            const SizedBox(height: 15),
+                            _buildBottoneNuovoViaggio(),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: _viaggiFiltrati.length + 1, // +1 per mettere il bottone "+" in fondo
+                        itemBuilder: (context, index) {
+                          if (index == _viaggiFiltrati.length) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 15.0),
+                              child: _buildBottoneNuovoViaggio(),
+                            );
+                          }
+
+                          final viaggio = _viaggiFiltrati[index];
+                          bool isFuturo = viaggio.data.isAfter(oggi);
+
+                          // RITORNA IL RETTANGOLO TRASFORMATO IN PULSANTE CLICCABILE
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 15),
+                            child: InkWell(
+                              onTap: () {
+                                debugPrint("Cliccato sul viaggio: ${viaggio.titolo}");
+                              },
+                              borderRadius: BorderRadius.circular(5),
+                              child: Ink(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(5),
+                                  border: Border.all(color: Colors.black, width: 1.5),
+                                ),
+                                child: Row(
+                                  children: [
+                                    // Pallino colorato di stato (Verde o Rosso)
+                                    Container(
+                                      width: 14,
+                                      height: 14,
+                                      decoration: BoxDecoration(
+                                        color: isFuturo ? Colors.green : Colors.red,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: Colors.black, width: 1),
+                                      ),
+                                    ),
+                                    
+                                    const SizedBox(width: 15),
+                                    
+                                    // Titolo del viaggio centrato
+                                    Expanded(
+                                      child: Text(
+                                        viaggio.titolo,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 1.1,
+                                        ),
+                                      ),
+                                    ),
+                                    
+                                    const SizedBox(width: 14),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: const CustomBottomNavBar(),
+    );
+  }
+
+  // Widget per il Rettangolo Nero con il "+" per creare un nuovo viaggio
+  Widget _buildBottoneNuovoViaggio() {
+    return InkWell(
+      onTap: () {
+        debugPrint("Direzione: Pagina Creazione Nuovo Viaggio!");
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child: const Column(
+          children: [
+            Icon(Icons.add, color: Colors.white, size: 28),
+            SizedBox(height: 4),
+            Text(
+              'NUOVO VIAGGIO',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
