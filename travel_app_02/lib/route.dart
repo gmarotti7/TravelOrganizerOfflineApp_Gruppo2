@@ -1,113 +1,21 @@
 import 'package:flutter/material.dart';
+// Importiamo la pagina start appena creata nella cartella views
+import 'package:travel_app_02/views/start.dart'; 
 
-class TravelLoginPage extends StatelessWidget {
-  const TravelLoginPage({super.key});
+class AppRoutes {
+  // Stringhe costanti identificative per le pagine
+  static const String start = '/';
+  // static const String login = '/login';       // Sblocco futuro
+  // static const String register = '/register'; // Sblocco futuro
+  // static const String home = '/home';         // Sblocco futuro
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color.fromRGBO(225, 170, 5, 1), // Giallo ocra
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24.0),
-              // Un po' di padding verticale per respirare su schermi minuscoli
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Titolo Principale
-                  const Text(
-                    'TRAVEL ORGANIZER\nOFFLINE',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 40),
-
-                  // Cerchio centrale con lo Zaino
-                  Container(
-                    width: 180,
-                    height: 180,
-                    decoration: const BoxDecoration(
-                      color: Colors.black,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.backpack,
-                        size: 100,
-                        color: Color(0xFFD7CCC8), // Beige/crema
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 50),
-
-                  // Pulsante ACCEDI
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // TODO: Logica di login
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        minimumSize: const Size(220, 55),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Text(
-                        'ACCEDI',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 25),
-
-                  // Pulsante REGISTRATI
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // TODO: Logica di registrazione
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        minimumSize: const Size(220, 55),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Text(
-                        'REGISTRATI',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+  // Mappa delle rotte dell'applicazione
+  static Map<String, WidgetBuilder> getRoutes() {
+    return {
+      start: (context) => const TravelStartPage(),
+      // login: (context) => const TravelLoginPage(),
+      // register: (context) => const TravelRegisterPage(),
+      // home: (context) => const TravelHomePage(),
+    };
   }
 }
