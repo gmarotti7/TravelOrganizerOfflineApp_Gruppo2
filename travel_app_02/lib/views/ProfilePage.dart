@@ -1,0 +1,141 @@
+import 'package:flutter/material.dart';
+import 'BottomBar.dart';
+
+class ProfilePage extends StatelessWidget {
+  const ProfilePage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.amber,
+      
+      // --- BARRA SUPERIORE ---
+      appBar: AppBar(
+        backgroundColor: Colors.amber,
+        elevation: 0,
+        centerTitle: true, // Centra il titolo come nel disegno
+        title: const Text(
+          'IL TUO PROFILO',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+            fontSize: 24,
+          ),
+        ),
+      ),
+      
+      // --- CORPO CENTRALE ---
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          // stretch allarga automaticamente i bottoni per riempire la larghezza
+          crossAxisAlignment: CrossAxisAlignment.stretch, 
+          children: [
+            
+            // 1. SEZIONE INFO UTENTE (Icona + Testi)
+            Row(
+              children: [
+                const Icon(
+                  Icons.account_circle,
+                  size: 85,
+                  color: Colors.black,
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'USERNAME: UtenteTest', // Qui andrà la variabile del Model
+                        style: TextStyle(
+                          fontSize: 18, 
+                          fontWeight: FontWeight.bold, 
+                          color: Colors.black
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        'EMAIL: test@email.com', // Qui andrà la variabile del Model
+                        style: TextStyle(
+                          fontSize: 18, 
+                          fontWeight: FontWeight.bold, 
+                          color: Colors.black
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 50),
+
+            // 2. BOTTONE MODIFICA
+            _buildMenuButton(
+              testo: 'MODIFICA',
+              onPressed: () {
+                // TODO: Collegare il metodo del Controller per andare alla schermata di modifica
+              },
+            ),
+            
+            const SizedBox(height: 25),
+
+            // 3. BOTTONE STATISTICHE
+            _buildMenuButton(
+              testo: 'STATISTICHE',
+              onPressed: () {
+                // TODO: Collegare il metodo del Controller per andare alle statistiche
+              },
+            ),
+            
+            const SizedBox(height: 25),
+
+            // 4. BOTTONE LOGOUT CON ICONA
+            _buildMenuButton(
+              testo: 'LOGOUT',
+              icona: Icons.power_settings_new, // L'icona di accensione/spegnimento
+              onPressed: () {
+                // TODO: Collegare il metodo del Controller per effettuare il logout
+              },
+            ),
+          ],
+        ),
+      ),
+      
+      // --- BARRA DI NAVIGAZIONE INFERIORE ---
+      bottomNavigationBar: const CustomBottomNavBar(),
+    );
+  }
+
+  // --- FUNZIONE DI SUPPORTO PER I BOTTONI ---
+  // Rende il codice molto più pulito evitando di riscrivere lo stesso blocco 3 volte
+  Widget _buildMenuButton({required String testo, IconData? icona, required VoidCallback onPressed}) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 20), // Altezza del bottone
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero, // Angoli squadrati
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center, // Centra il contenuto del bottone
+        children: [
+          if (icona != null) ...[
+            Icon(icona, color: Colors.white, size: 28),
+            const SizedBox(width: 10),
+          ],
+          Text(
+            testo,
+            style: const TextStyle(
+              fontSize: 20, 
+              fontWeight: FontWeight.bold
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
