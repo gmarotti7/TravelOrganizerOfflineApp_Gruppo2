@@ -12,11 +12,10 @@ class TravelApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp( // Rimesso const qui perché TravelLoginPage ha un costruttore const
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Travel Organizer',
       home: NewCost(),
     );
   }
 }
-
