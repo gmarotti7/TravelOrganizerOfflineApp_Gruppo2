@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import class TravelLoginPage {
-  
-}
+import 'package:travel_app_02/route.dart'; // <-- AGGIUNTO QUESTO IMPORT
 
 void main() {
   runApp(const TravelApp());
@@ -12,11 +10,10 @@ class TravelApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Rimosso il const da qui per permettere dinamicità all'interno delle pagine
-    return MaterialApp(
+    return const MaterialApp( // Rimesso const qui perché TravelLoginPage ha un costruttore const
       debugShowCheckedModeBanner: false,
       title: 'Travel Organizer',
-      home: const TravelLoginPage(),
+      home: TravelLoginPage(),
     );
   }
 }

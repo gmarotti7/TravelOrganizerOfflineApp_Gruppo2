@@ -6,7 +6,7 @@ class TravelLoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 233, 176, 6), // Giallo ocra
+      backgroundColor: const Color.fromRGBO(225, 170, 5, 1), // Giallo ocra
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
