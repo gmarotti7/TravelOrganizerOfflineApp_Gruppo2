@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:travel_app_02/route.dart'; // Serve per poter usare i nomi delle rotte sui pulsanti
 
-class TravelStartPage extends StatelessWidget {
-  const TravelStartPage({super.key});
+class Start extends StatelessWidget {
+  const Start({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -48,8 +48,7 @@ class TravelStartPage extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 40),
                     child: ElevatedButton(
                       onPressed: () {
-                        // TODO: Logica di login o navigazione verso la login reale
-                        // Navigator.pushNamed(context, AppRoutes.login);
+                        Navigator.pushNamed(context, AppRoutes.login);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
@@ -75,8 +74,7 @@ class TravelStartPage extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 40),
                     child: ElevatedButton(
                       onPressed: () {
-                        // TODO: Logica di registrazione o navigazione
-                        // Navigator.pushNamed(context, AppRoutes.register);
+                        Navigator.pushNamed(context, AppRoutes.register);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
