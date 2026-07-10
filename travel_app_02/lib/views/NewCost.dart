@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:travel_app_02/models/spesa.dart';
 import 'package:travel_app_02/route.dart';
 import 'BottomBar.dart'; // Import aggiornato con il nuovo nome del file
 
@@ -11,6 +12,11 @@ class NewCost extends StatefulWidget {
 }
 
 class _NewCostState extends State<NewCost> {
+  // Aggiungi questi controller sotto le altre tue variabili
+  final _titoloController = TextEditingController();
+  final _costoController = TextEditingController();
+  final _dataController = TextEditingController();
+  final _descrizioneController = TextEditingController();
   // Variabili per i menu a tendina
   String? _statoSelezionato;
   String? _metodoPagamento;
@@ -99,6 +105,7 @@ class _NewCostState extends State<NewCost> {
           icon: const Icon(Icons.arrow_back, color: Colors.black, size: 30),
           onPressed: () {
             // Logica per tornare indietro
+            Navigator.pop(context);
           },
         ),
         
@@ -111,15 +118,6 @@ class _NewCostState extends State<NewCost> {
             fontSize: 24,
           ),
         ),
-        
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.menu, color: Colors.black, size: 30),
-            onPressed: () {
-              // Logica menu laterale
-            },
-          ),
-        ],
       ),
 
       // 3. CORPO CENTRALE ADATTATO A TUTTO SCHERMO
@@ -167,6 +165,7 @@ class _NewCostState extends State<NewCost> {
 
               // 2. DATA (GG/MM/AAAA)
               TextField(
+                controller: _dataController,
                 onChanged: _validaData,
                 decoration: InputDecoration(
                   hintText: 'GG/MM/AAAA',
@@ -202,8 +201,9 @@ class _NewCostState extends State<NewCost> {
               // 4. TITOLO
               const Text('TITOLO', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
               const SizedBox(height: 5),
-              const TextField(
-                decoration: InputDecoration(
+              TextField(
+                controller: _titoloController,
+                decoration: const InputDecoration(
                   filled: true,
                   fillColor: Colors.white,
                   contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
@@ -216,7 +216,8 @@ class _NewCostState extends State<NewCost> {
               // 5. DESCRIZIONE
               const Text('DESCRIZIONE:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
               const SizedBox(height: 5),
-              const TextField(
+              TextField(
+                controller: _descrizioneController,
                 maxLines: 3,
                 decoration: InputDecoration(
                   filled: true,
@@ -268,6 +269,7 @@ class _NewCostState extends State<NewCost> {
                   ),
                   Expanded(
                     child: TextField(
+                      controller: _costoController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
@@ -313,7 +315,16 @@ class _NewCostState extends State<NewCost> {
                 child: ElevatedButton(
                   onPressed: () {
                     // Logica di salvataggio
-                    Navigator.pushReplacementNamed(context, AppRoutes.riepilogoViaggio);
+                    final nuovaSpesa = Spesa(
+                      id: DateTime.now().toString(), // ID univoco
+                      titolo: _titoloController.text.isEmpty ? 'Nuova Spesa' : _titoloController.text,
+                      importo: double.tryParse(_costoController.text.replaceAll(',', '.')) ?? 0.0,
+                      stato: _statoSelezionato ?? 'Da pagare',
+                      data: _dataController.text,
+                      descrizione: _descrizioneController.text,
+                      metodoPagamento: _metodoPagamento ?? 'Contanti',
+                    );
+                    Navigator.pop(context, nuovaSpesa);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black,

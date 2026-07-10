@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:travel_app_02/controllers/riepilogo_viaggio_controller.dart';
 import 'package:travel_app_02/models/spesa.dart';
 import 'package:travel_app_02/models/tappa.dart';
+import 'package:travel_app_02/route.dart';
 
 class RiepilogoViaggio extends StatefulWidget {
   final RiepilogoViaggioController controller;
@@ -36,10 +37,9 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
     "Cena a Trastevere"
   ];
   
-  final List<Map<String, dynamic>> speseFittizie = [
-    {"titolo": "Biglietto Treno", "importo": 45.50},
-    {"titolo": "Cena Carbonara", "importo": 35.00},
-    {"titolo": "Ticket Musei", "importo": 55.00},
+  List<Spesa> listaSpese = [
+    Spesa(id: '1', titolo: "Biglietto Treno", importo: 45.50, stato: 'Pagata', data: '12/08/2026', descrizione: 'Andata e ritorno', metodoPagamento: 'Carta di credito'),
+    Spesa(id: '2', titolo: "Cena Carbonara", importo: 35.00, stato: 'Pagata', data: '13/08/2026'),
   ];
   // ----------------------------------------------
 
@@ -191,7 +191,14 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
             const SizedBox(height: 16),
 
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () async {
+                final nuovaSpesa = await Navigator.pushNamed(context, '/new_cost');
+                if (nuovaSpesa != null && nuovaSpesa is Spesa) {
+                  setState(() {
+                    listaSpese.add(nuovaSpesa);
+                  });
+                }
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
                 padding: const EdgeInsets.symmetric(vertical: 14),
@@ -227,27 +234,36 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 8),
-                  ...speseFittizie.map(
-                    (spesa) => Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                      margin: const EdgeInsets.only(bottom: 6),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.black54),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "- ${spesa["titolo"]}",
-                            style: const TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                          Text(
-                            _formatValuta(spesa["importo"]),
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ],
+                  ...listaSpese.map(
+                    (spesa) => InkWell(
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context, 
+                          AppRoutes.recapCost,
+                          arguments: spesa,
+                        );
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                        margin: const EdgeInsets.only(bottom: 6),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.black54),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "- ${spesa.titolo}",
+                              style: const TextStyle(fontWeight: FontWeight.w500),
+                            ),
+                            Text(
+                              _formatValuta(spesa.importo),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

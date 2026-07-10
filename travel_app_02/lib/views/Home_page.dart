@@ -220,6 +220,7 @@ class _HomePageState extends State<HomePage> {
                             child: InkWell(
                               onTap: () {
                                 debugPrint("Cliccato sul viaggio: ${viaggio.titolo}");
+                                Navigator.pushNamed(context, AppRoutes.riepilogoViaggio, arguments: viaggio); //Appena modificat
                               },
                               borderRadius: BorderRadius.circular(5),
                               child: Ink(
