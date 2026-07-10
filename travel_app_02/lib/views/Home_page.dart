@@ -1,5 +1,6 @@
 // lib/views/home_page.dart
 import 'package:flutter/material.dart';
+import 'add_trip.dart'; 
 import 'BottomBar.dart';
 
 // Modello dati temporaneo per i viaggi
@@ -15,8 +16,8 @@ class Viaggio {
   });
 }
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key}); // 1. RIPULITO: Rimosso il carattere cinese da 'key'
+class HomePage extends StatefulWidget{
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -59,15 +60,14 @@ class _HomePageState extends State<HomePage> {
 
     setState(() {
       _viaggiFiltrati = _tuttiIViaggi.where((viaggio) {
-        // Determina lo stato del viaggio in base alla data attuale
         String statoViaggio = viaggio.data.isAfter(oggi) ? 'da fare' : 'passato';
 
-        // 1. Controllo Filtro Testuale (Luogo, Stato o Titolo)
+        // 1. Controllo Filtro Testuale
         bool matchTesto = viaggio.luogo.toLowerCase().contains(query) || 
                           statoViaggio.contains(query) ||
                           viaggio.titolo.toLowerCase().contains(query);
 
-        // 2. Controllo Filtro Data (se è stata selezionata una data dal calendario)
+        // 2. Controllo Filtro Data
         bool matchData = true;
         if (_selectedDate != null) {
           matchData = viaggio.data.year == _selectedDate!.year &&
@@ -90,9 +90,8 @@ class _HomePageState extends State<HomePage> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            // 2. CORRETTO: Usiamo dialogTheme con DialogThemeData per evitare l'errore di tipo
-            dialogTheme: DialogThemeData(
-              backgroundColor: Colors.grey[900],
+            dialogTheme: const DialogThemeData(
+              backgroundColor: Color(0xFF121212),
             ),
             colorScheme: const ColorScheme.dark(
               primary: Colors.amber,
@@ -162,7 +161,7 @@ class _HomePageState extends State<HomePage> {
                   prefixIcon: const Icon(Icons.search, color: Colors.black),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      Icons.calendar_month, // 3. RIPULITO: Rimosso il carattere cinese da qui
+                      Icons.calendar_month,
                       color: _selectedDate == null ? Colors.black : Colors.red,
                     ),
                     onPressed: () {
@@ -196,7 +195,7 @@ class _HomePageState extends State<HomePage> {
 
               const SizedBox(height: 25),
 
-              // 3. SEZIONE LISTA VIAGGI (PULSANTI INTERATTIVI)
+              // 3. SEZIONE LISTA VIAGGI
               Expanded(
                 child: _viaggiFiltrati.isEmpty
                     ? Center(
@@ -213,7 +212,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                       )
                     : ListView.builder(
-                        itemCount: _viaggiFiltrati.length + 1, // +1 per mettere il bottone "+" in fondo
+                        itemCount: _viaggiFiltrati.length + 1,
                         itemBuilder: (context, index) {
                           if (index == _viaggiFiltrati.length) {
                             return Padding(
@@ -225,7 +224,6 @@ class _HomePageState extends State<HomePage> {
                           final viaggio = _viaggiFiltrati[index];
                           bool isFuturo = viaggio.data.isAfter(oggi);
 
-                          // RITORNA IL RETTANGOLO TRASFORMATO IN PULSANTE CLICCABILE
                           return Container(
                             margin: const EdgeInsets.only(bottom: 15),
                             child: InkWell(
@@ -242,7 +240,6 @@ class _HomePageState extends State<HomePage> {
                                 ),
                                 child: Row(
                                   children: [
-                                    // Pallino colorato di stato (Verde o Rosso)
                                     Container(
                                       width: 14,
                                       height: 14,
@@ -252,10 +249,7 @@ class _HomePageState extends State<HomePage> {
                                         border: Border.all(color: Colors.black, width: 1),
                                       ),
                                     ),
-                                    
                                     const SizedBox(width: 15),
-                                    
-                                    // Titolo del viaggio centrato
                                     Expanded(
                                       child: Text(
                                         viaggio.titolo,
@@ -268,7 +262,6 @@ class _HomePageState extends State<HomePage> {
                                         ),
                                       ),
                                     ),
-                                    
                                     const SizedBox(width: 14),
                                   ],
                                 ),
@@ -286,11 +279,26 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Widget per il Rettangolo Nero con il "+" per creare un nuovo viaggio
   Widget _buildBottoneNuovoViaggio() {
     return InkWell(
-      onTap: () {
-        debugPrint("Direzione: Pagina Creazione Nuovo Viaggio!");
+      onTap: () async {
+        final risultato = await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const AddTrip()),
+        );
+
+        if (risultato != null && risultato is Map<String, dynamic>) {
+          setState(() {
+            _tuttiIViaggi.add(
+              Viaggio(
+                titolo: risultato['titolo'],
+                luogo: risultato['luogo'],
+                data: risultato['data'],
+              ),
+            );
+            _applicaFiltri();
+          });
+        }
       },
       child: Container(
         width: double.infinity,
