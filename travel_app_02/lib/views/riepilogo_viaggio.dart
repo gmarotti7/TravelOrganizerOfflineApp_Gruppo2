@@ -38,10 +38,30 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
   ];
   
   List<Spesa> listaSpese = [
-    Spesa(id: '1', titolo: "Biglietto Treno", importo: 45.50, stato: 'Pagata', data: '12/08/2026', descrizione: 'Andata e ritorno', metodoPagamento: 'Carta di credito'),
-    Spesa(id: '2', titolo: "Cena Carbonara", importo: 35.00, stato: 'Pagata', data: '13/08/2026'),
+    Spesa(
+      id: '1', 
+      titolo: "Biglietto Treno", 
+      importo: 45.50, 
+      stato: 'Pagata', 
+      data: '12/08/2026', 
+      descrizione: 'Andata e ritorno', 
+      metodoPagamento: 'Carta di credito',
+      categoria: 'Trasporti',
+      viaggioAssociato: 'Vacanza a Roma', 
+      attivitaAssociata: 'Spostamento', 
+    ),
+    Spesa(
+      id: '2', 
+      titolo: "Cena Carbonara", 
+      importo: 35.00, 
+      stato: 'Pagata', 
+      data: '13/08/2026',
+      categoria: 'Cibo e Bevande',
+      viaggioAssociato: 'Vacanza a Roma',
+      attivitaAssociata: 'Cena in centro',
+    ),
   ];
-  // ----------------------------------------------
+
 
   String _formatValuta(double importo) {
     return NumberFormat.currency(locale: 'it_IT', symbol: '€').format(importo);
@@ -192,7 +212,7 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
 
             ElevatedButton(
               onPressed: () async {
-                final nuovaSpesa = await Navigator.pushNamed(context, '/new_cost');
+                final nuovaSpesa = await Navigator.pushNamed(context, AppRoutes.newCost);
                 if (nuovaSpesa != null && nuovaSpesa is Spesa) {
                   setState(() {
                     listaSpese.add(nuovaSpesa);

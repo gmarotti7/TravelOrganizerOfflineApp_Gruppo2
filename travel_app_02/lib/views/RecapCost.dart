@@ -84,24 +84,15 @@ class RecapCost extends StatelessWidget {
             children: [
               // La riga con la freccia e il menu è stata spostata nell'AppBar!
               // Iniziamo direttamente con i dati:
-
-
               _buildRecapItem('TITOLO', spesaPassata.titolo),
               _buildRecapItem('IMPORTO', '${spesaPassata.importo.toStringAsFixed(2)} EUR'),
               _buildRecapItem('STATO', spesaPassata.stato ?? 'Non specificato'),
               _buildRecapItem('DATA', spesaPassata.data ?? 'Non specificata'),
               _buildRecapItem('METODO DI PAGAMENTO', spesaPassata.metodoPagamento ?? 'Non specificato'),
-
-
-              
-              
-             // _buildRecapItem('CATEGORIA', spesaPassata.categoria),
-              
-              
-              //_buildRecapItem('VIAGGIO ASSOCIATO', spesaPassata.ViaggioAssociato),
-              //_buildRecapItem('ATTIVITÀ ASSOCIATA', spesaPassata.attività),
-
-              
+              _buildRecapItem('CATEGORIA', spesaPassata.categoria ?? 'Non Specificato'),
+              _buildRecapItem('VIAGGIO ASSOCIATO', spesaPassata.viaggioAssociato ?? 'Non specificato'),
+              _buildRecapItem('ATTIVITÀ ASSOCIATA', spesaPassata.attivitaAssociata ?? 'Non specificata'),
+ 
               const SizedBox(height: 10),
               const Text(
                 'NOTE:',

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:travel_app_02/models/spesa.dart';
 import 'package:travel_app_02/models/viaggio.dart';
 
-// 🔴 Aggiungere "extends ChangeNotifier"
 class RiepilogoViaggioController extends ChangeNotifier {
   final Viaggio trip;
 

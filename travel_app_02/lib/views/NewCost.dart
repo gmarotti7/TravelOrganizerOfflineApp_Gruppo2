@@ -17,6 +17,9 @@ class _NewCostState extends State<NewCost> {
   final _costoController = TextEditingController();
   final _dataController = TextEditingController();
   final _descrizioneController = TextEditingController();
+  String? _categoriaSelezionata;
+  final _viaggioAssociatoController = TextEditingController();
+  final _attivitaAssociataController = TextEditingController();
   // Variabili per i menu a tendina
   String? _statoSelezionato;
   String? _metodoPagamento;
@@ -26,6 +29,46 @@ class _NewCostState extends State<NewCost> {
   String? _erroreData;
   String? _erroreOra;
 
+  // Funzione per mostrare il calendario
+  Future<void> _selezionaData(BuildContext context) async {
+    final DateTime? dataSelezionata = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(), // Data di partenza
+      firstDate: DateTime(2000),   // Data minima
+      lastDate: DateTime(2100),    // Data massima
+      // Personalizziamo i colori per farli abbinare al tuo tema Giallo/Nero!
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Colors.black, // Colore dell'intestazione e dei giorni selezionati
+              onPrimary: Colors.amber, // Colore del testo sul nero
+              onSurface: Colors.black, // Colore dei giorni normali
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.black, // Colore dei bottoni "OK" e "ANNULLA"
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    // Se l'utente ha scelto una data (e non ha cliccato "Annulla")
+    if (dataSelezionata != null) {
+      // Formattiamo la data in gg/mm/aaaa aggiungendo lo zero se necessario
+      String giorno = dataSelezionata.day.toString().padLeft(2, '0');
+      String mese = dataSelezionata.month.toString().padLeft(2, '0');
+      String anno = dataSelezionata.year.toString();
+      
+      // Aggiorniamo il controller del testo
+      setState(() {
+        _dataController.text = "$giorno/$mese/$anno";
+      });
+    }
+  }
   // --- LOGICA CONTROLLO DATA ---
   void _validaData(String valore) {
     if (valore.isEmpty) {
@@ -164,22 +207,26 @@ class _NewCostState extends State<NewCost> {
               const SizedBox(height: 15),
 
               // 2. DATA (GG/MM/AAAA)
+              const Text('DATA', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+              const SizedBox(height: 5),
               TextField(
                 controller: _dataController,
-                onChanged: _validaData,
+                keyboardType: TextInputType.datetime, // Mostra tastiera con numeri e simboli
                 decoration: InputDecoration(
-                  hintText: 'GG/MM/AAAA',
-                  errorText: _erroreData,
                   filled: true,
                   fillColor: Colors.white,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                   enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 2), borderRadius: BorderRadius.zero),
                   focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
-                  errorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red, width: 2), borderRadius: BorderRadius.zero),
-                  focusedErrorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red, width: 3), borderRadius: BorderRadius.zero),
+                  hintText: "gg/mm/aaaa",
+                  // Ecco l'icona magica che apre il calendario
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.calendar_month, color: Colors.black),
+                    onPressed: () => _selezionaData(context),
+                  ),
                 ),
               ),
-              const SizedBox(height: 15),
+              const SizedBox(height: 20),
 
               // 3. ORA (HH:MM)
               TextField(
@@ -259,6 +306,68 @@ class _NewCostState extends State<NewCost> {
               ),
               const SizedBox(height: 20),
 
+              //CATEGORIA
+              Row(
+                children: [
+                  const Text('CATEGORIA: ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: _categoriaSelezionata,
+                      decoration: const InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 2), borderRadius: BorderRadius.zero),
+                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
+                      ),
+                      hint: const Text('. . .'),
+                      items: const [
+                        DropdownMenuItem(value: 'Cibo e Bevande', child: Text('Cibo e Bevande')),
+                        DropdownMenuItem(value: 'Trasporti', child: Text('Trasporti')),
+                        DropdownMenuItem(value: 'Alloggio', child: Text('Alloggio')),
+                        DropdownMenuItem(value: 'Svago e Tour', child: Text('Svago e Tour')),
+                        DropdownMenuItem(value: 'Altro', child: Text('Altro')),
+                      ],
+                      onChanged: (valore) {
+                        setState(() => _categoriaSelezionata = valore);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // VIAGGIO ASSOCIATO
+              const Text('VIAGGIO ASSOCIATO', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+              const SizedBox(height: 5),
+              TextField(
+                controller: _viaggioAssociatoController,
+                decoration: const InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 2), borderRadius: BorderRadius.zero),
+                  focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // ATTIVITÀ ASSOCIATA
+              const Text('ATTIVITÀ ASSOCIATA', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+              const SizedBox(height: 5),
+              TextField(
+                controller: _attivitaAssociataController,
+                decoration: const InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 2), borderRadius: BorderRadius.zero),
+                  focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
+                ),
+              ),
+              const SizedBox(height: 20),
+
               // 7. COSTO
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -323,6 +432,9 @@ class _NewCostState extends State<NewCost> {
                       data: _dataController.text,
                       descrizione: _descrizioneController.text,
                       metodoPagamento: _metodoPagamento ?? 'Contanti',
+                      categoria: _categoriaSelezionata ?? 'Altro',
+                      viaggioAssociato: _viaggioAssociatoController.text.isEmpty ? 'Nessuno' : _viaggioAssociatoController.text,
+                      attivitaAssociata: _attivitaAssociataController.text.isEmpty ? 'Nessuna' : _attivitaAssociataController.text,
                     );
                     Navigator.pop(context, nuovaSpesa);
                   },
@@ -348,4 +460,5 @@ class _NewCostState extends State<NewCost> {
       bottomNavigationBar: const CustomBottomNavBar(),
     );
   }
+
 }

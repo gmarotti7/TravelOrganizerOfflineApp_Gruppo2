@@ -1,5 +1,9 @@
-// lib/views/add_trip.dart
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:travel_app_02/controllers/viaggioController.dart';
+import 'package:intl/intl.dart';
+import 'package:travel_app_02/models/viaggio.dart';
 
 class AddTrip extends StatefulWidget {
   const AddTrip({super.key});
@@ -14,6 +18,7 @@ class _AddTripState extends State<AddTrip> {
   final _destinazioneController = TextEditingController();
   final _budgetController = TextEditingController();
   final _noteController = TextEditingController();
+  final ViaggioController _viaggioController = ViaggioController();
 
   // Gestione Date
   DateTime? _dataPartenza;
@@ -259,15 +264,48 @@ Future<void> _selezionaDateRange(BuildContext context) async {
               _buildButtonNero(
                 testo: 'CONFERMA',
                 onPressed: () {
-                  if (_titoloController.text.isNotEmpty && _destinazioneController.text.isNotEmpty) {
-                    final nuovoViaggioDati = {
-                      'titolo': _titoloController.text,
-                      'luogo': _destinazioneController.text,
-                      'data': _dataPartenza ?? DateTime.now(),
-                    };
-                    Navigator.pop(context, nuovoViaggioDati);
+                  if (_titoloController.text.isNotEmpty && 
+                      _destinazioneController.text.isNotEmpty && 
+                      _dataPartenza != null && 
+                      _dataRitorno != null) {
+                    
+                    final DateFormat format = DateFormat('dd/MM/yyyy');
+                    String dataPartenzaStr = format.format(_dataPartenza!);
+                    String dataRitornoStr = format.format(_dataRitorno!);
+
+                    // Questa lista dovrà arrivarti dalla pagina precedente o dal database
+                    List<Viaggio> listaViaggiAttuali = []; 
+                    
+                    // CHIAMATA AL CONTROLLER
+                    bool isValido = _viaggioController.validaNuovoViaggio(
+                      _titoloController.text, 
+                      dataPartenzaStr, 
+                      dataRitornoStr, 
+                      listaViaggiAttuali
+                    );
+
+                    if (isValido) {
+                      final nuovoViaggioDati = {
+                        'titolo': _titoloController.text,
+                        'luogo': _destinazioneController.text,
+                        'data': _dataPartenza, 
+                      };
+                      Navigator.pop(context, nuovoViaggioDati);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Errore: Nome duplicato o Date sovrapposte!'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
                   } else {
-                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Compila tutti i campi obbligatori!'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
                   }
                 },
               ),
