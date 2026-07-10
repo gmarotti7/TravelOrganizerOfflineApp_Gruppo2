@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+
 import 'package:travel_app_02/controllers/riepilogo_viaggio_controller.dart';
 import 'package:travel_app_02/models/spesa.dart';
 import 'package:travel_app_02/models/tappa.dart';
@@ -10,28 +12,36 @@ class RiepilogoViaggio extends StatefulWidget {
   const RiepilogoViaggio({
     super.key,
     required this.controller,
-  });
+    });
+
 
   @override
   State<RiepilogoViaggio> createState() => _RiepilogoViaggioState();
 }
 
 class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
-  @override
-  void initState() {
-    super.initState();
-    widget.controller.addListener(_updateUI);
-  }
-
-  @override
-  void dispose() {
-    widget.controller.removeListener(_updateUI);
-    super.dispose();
-  }
-
-  void _updateUI() {
-    setState(() {});
-  }
+  
+  // --- DATI FITTIZI (MOCK) PER IL TEST GRAFICO ---
+  final String titoloViaggio = "Vacanza a Roma";
+  final String descrizioneViaggio = "Viaggio di relax di 5 giorni nella capitale con visita ai musei e tour gastronomico.";
+  final double budgetPrevisto = 800.00;
+  final double speseTotali = 135.50;
+  final Color coloreStato = Colors.green; // Verde: in corso/tutto ok
+  final Color coloreSpeseTotali = Colors.black;
+  
+  // Liste fittizie per simulare i modelli Tappa e Spesa
+  final List<String> tappeFittizie = [
+    "Arrivo a Termini e Check-in",
+    "Visita al Colosseo",
+    "Cena a Trastevere"
+  ];
+  
+  final List<Map<String, dynamic>> speseFittizie = [
+    {"titolo": "Biglietto Treno", "importo": 45.50},
+    {"titolo": "Cena Carbonara", "importo": 35.00},
+    {"titolo": "Ticket Musei", "importo": 55.00},
+  ];
+  // ----------------------------------------------
 
   String _formatValuta(double importo) {
     return NumberFormat.currency(locale: 'it_IT', symbol: '€').format(importo);
@@ -39,43 +49,32 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = widget.controller;
-    final trip = controller.trip;
-
-    // Colore giallo ocra/arancione di sfondo dell'app
     const Color gialloSfondo = Color(0xFFFFB84D);
 
     return Scaffold(
-      backgroundColor: gialloSfondo, // Tutto lo schermo giallo
+      backgroundColor: gialloSfondo,
       appBar: AppBar(
         backgroundColor: gialloSfondo,
         elevation: 0,
         leading: const BackButton(color: Colors.black),
         title: Text(
-          trip.titolo,
+          titoloViaggio,
           style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         actions: [
-          // Indicatore dello stato del viaggio
           Container(
             width: 20,
             height: 20,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: controller.statoViaggioColor,
+              color: coloreStato,
               border: Border.all(color: Colors.black, width: 2),
             ),
           ),
           const SizedBox(width: 8),
           PopupMenuButton<String>(
             icon: const Icon(Icons.menu, color: Colors.black),
-            onSelected: (valore) {
-              if (valore == 'modifica') {
-                // TODO: Navigator.pushNamed(context, '/modifica-viaggio');
-              } else if (valore == 'elimina') {
-                // TODO: Mostra dialogo conferma eliminazione
-              }
-            },
+            onSelected: (valore) {},
             itemBuilder: (context) => const [
               PopupMenuItem(value: 'modifica', child: Text('MODIFICA VIAGGIO')),
               PopupMenuItem(value: 'elimina', child: Text('ELIMINA VIAGGIO')),
@@ -89,9 +88,8 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Descrizione del viaggio centrata
             Text(
-              trip.descrizione,
+              descrizioneViaggio,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.black,
@@ -117,35 +115,21 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
                   ),
                   const SizedBox(height: 8),
 
-                  // Lista delle tappe (cliccabili)
-                  if (trip.tappe.isEmpty)
-                    const Text("- Nessuna tappa presente", style: TextStyle(fontStyle: FontStyle.italic))
-                  else
-                    ...trip.tappe.map(
-                      (tappa) => InkWell(
-                        onTap: () {
-                          // Naviga alla schermata riepilogo tappa del collaboratore
-                          Navigator.pushNamed(
-                            context,
-                            '/riepilogo-tappa',
-                            arguments: tappa,
-                          );
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                          margin: const EdgeInsets.only(bottom: 6),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black54),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            "- ${tappa.titolo}",
-                            style: const TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                        ),
+                  ...tappeFittizie.map(
+                    (tappa) => Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      margin: const EdgeInsets.only(bottom: 6),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.black54),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        "- $tappa",
+                        style: const TextStyle(fontWeight: FontWeight.w500),
                       ),
                     ),
+                  ),
 
                   const SizedBox(height: 16),
                   const Text(
@@ -153,20 +137,14 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 8),
-                  InkWell(
-                    onTap: () {
-                      // Naviga alla pagina riepilogo packlist/checklist
-                      Navigator.pushNamed(context, '/riepilogo-packlist');
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.black54),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text("- Vedi Packlist", style: TextStyle(fontWeight: FontWeight.w500)),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black54),
+                      borderRadius: BorderRadius.circular(6),
                     ),
+                    child: const Text("- Vedi Packlist", style: TextStyle(fontWeight: FontWeight.w500)),
                   ),
 
                   const SizedBox(height: 16),
@@ -175,27 +153,20 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 8),
-                  InkWell(
-                    onTap: () {
-                      // Naviga alla pagina riepilogo checklist
-                      Navigator.pushNamed(context, '/riepilogo-checklist');
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.black54),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text("- Vedi Checklist", style: TextStyle(fontWeight: FontWeight.w500)),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black54),
+                      borderRadius: BorderRadius.circular(6),
                     ),
+                    child: const Text("- Vedi Checklist", style: TextStyle(fontWeight: FontWeight.w500)),
                   ),
 
                   const SizedBox(height: 20),
                   const Divider(color: Colors.black),
                   const SizedBox(height: 8),
 
-                  // Spese Totale con cambio colore automatico
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -204,11 +175,11 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       Text(
-                        _formatValuta(controller.speseTotali),
+                        _formatValuta(speseTotali),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: controller.speseTotaliColor,
+                          color: coloreSpeseTotali,
                         ),
                       ),
                     ],
@@ -219,12 +190,8 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
 
             const SizedBox(height: 16),
 
-            // Bottone Nero "+ AGGIUNGI SPESA" -> Naviga alla pagina del collaboratore
             ElevatedButton(
-              onPressed: () {
-                // Porta alla pagina creata dal collaboratore per aggiungere spesa
-                Navigator.pushNamed(context, '/nuova-spesa');
-              },
+              onPressed: () {},
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
                 padding: const EdgeInsets.symmetric(vertical: 14),
@@ -260,52 +227,38 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 8),
-                  if (trip.spese.isEmpty)
-                    const Text("- Nessuna spesa ancora registrata", style: TextStyle(fontStyle: FontStyle.italic))
-                  else
-                    ...trip.spese.map(
-                      (spesa) => InkWell(
-                        onTap: () {
-                          // Naviga alla pagina riepilogo spesa del collaboratore
-                          Navigator.pushNamed(
-                            context,
-                            '/riepilogo-spesa',
-                            arguments: spesa,
-                          );
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                          margin: const EdgeInsets.only(bottom: 6),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black54),
-                            borderRadius: BorderRadius.circular(6),
+                  ...speseFittizie.map(
+                    (spesa) => Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      margin: const EdgeInsets.only(bottom: 6),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.black54),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "- ${spesa["titolo"]}",
+                            style: const TextStyle(fontWeight: FontWeight.w500),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "- ${spesa.titolo}",
-                                style: const TextStyle(fontWeight: FontWeight.w500),
-                              ),
-                              Text(
-                                _formatValuta(spesa.importo),
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ],
+                          Text(
+                            _formatValuta(spesa["importo"]),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
-                        ),
+                        ],
                       ),
                     ),
+                  ),
                 ],
               ),
             ),
 
             const SizedBox(height: 20),
 
-            // Budget Previsto in basso
             Text(
-              "BUDGET PREVISTO: ${_formatValuta(trip.budgetPrevisto)}",
+              "BUDGET PREVISTO: ${_formatValuta(budgetPrevisto)}",
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
