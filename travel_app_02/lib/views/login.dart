@@ -160,7 +160,9 @@ class _LoginState extends State<Login> {
 
                       // Pulsante ACCEDI
                       ElevatedButton(
-                        onPressed: _eseguiLogin,
+                        onPressed: () {
+                          Navigator.pushReplacementNamed(context, AppRoutes.home);
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.black,
                           minimumSize: const Size(220, 55),

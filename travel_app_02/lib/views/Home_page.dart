@@ -1,8 +1,10 @@
 // lib/views/home_page.dart
 import 'package:flutter/material.dart';
+import 'package:travel_app_02/route.dart';
 import 'BottomBar.dart';
 import 'add_trip.dart'; // AGGIUNTO: Import della pagina per creare il viaggio
 import 'package:travel_app_02/models/viaggio.dart'; // AGGIUNTO: Import del modello del tuo collega
+import 'package:travel_app_02/views/Add_trip.dart';
 
 class HomePage extends StatefulWidget{
   const HomePage({super.key});
@@ -271,10 +273,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildBottoneNuovoViaggio() {
     return InkWell(
       onTap: () async {
-        final risultato = await Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const AddTrip()),
-        );
+        final risultato = await Navigator.pushNamed(context, AppRoutes.addTrip);
 
         if (risultato != null && risultato is Map<String, dynamic>) {
           setState(() {
