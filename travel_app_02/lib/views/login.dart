@@ -67,8 +67,8 @@ class _LoginState extends State<Login> {
       });
       debugPrint("Login effettuato con successo! Navigazione...");
       
-      // MODIFICA QUI: Sostituisce la schermata attuale con la Home
-      Navigator.pushReplacementNamed(context, AppRoutes.home);
+      // CORRETTO: Cambiato in AppRoutes.start come definito nel tuo main.dart
+      Navigator.pushReplacementNamed(context, AppRoutes.start);
     } else {
       setState(() {
         _errorMessage = "username o password non corretto, riprova";

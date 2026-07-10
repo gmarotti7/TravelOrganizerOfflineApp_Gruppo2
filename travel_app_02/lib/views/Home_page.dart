@@ -1,7 +1,8 @@
 // lib/views/home_page.dart
 import 'package:flutter/material.dart';
 import 'BottomBar.dart';
-
+import 'add_trip.dart'; // AGGIUNTO: Import della pagina per creare il viaggio
+import 'package:travel_app_02/models/viaggio.dart'; // AGGIUNTO: Import del modello del tuo collega
 
 class HomePage extends StatefulWidget{
   const HomePage({super.key});
@@ -47,8 +48,8 @@ class _HomePageState extends State<HomePage> {
 
     setState(() {
       _viaggiFiltrati = _tuttiIViaggi.where((viaggio) {
-        // Determina lo stato del viaggio in base alla data attuale
-        String statoViaggio = viaggio.data.isAfter(oggi) ? 'da fare' : 'passato';
+        // CORRETTO: Sostituito viaggio.data con viaggio.dataInizio
+        String statoViaggio = viaggio.dataInizio.isAfter(oggi) ? 'da fare' : 'passato';
 
         // 1. Controllo Filtro Testuale
         bool matchTesto = viaggio.luogo.toLowerCase().contains(query) || 
@@ -278,10 +279,14 @@ class _HomePageState extends State<HomePage> {
         if (risultato != null && risultato is Map<String, dynamic>) {
           setState(() {
             _tuttiIViaggi.add(
+              // CORRETTO: Inserimento dinamico con i nuovi parametri del modello
               Viaggio(
                 titolo: risultato['titolo'],
                 luogo: risultato['luogo'],
-                data: risultato['data'],
+                dataInizio: risultato['data'],
+                dataFine: risultato['data'], // Per ora mettiamo la stessa data
+                id: DateTime.now().millisecondsSinceEpoch.toString(), // ID univoco fittizio
+                budgetPrevisto: 0.0, // Budget di default in attesa del collegamento
               ),
             );
             _applicaFiltri();
