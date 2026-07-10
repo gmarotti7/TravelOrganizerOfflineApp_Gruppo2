@@ -1,19 +1,8 @@
 // lib/views/home_page.dart
 import 'package:flutter/material.dart';
+import 'package:travel_app_02/models/viaggio.dart';
 import 'BottomBar.dart';
 
-// Modello dati temporaneo per i viaggi
-class Viaggio {
-  final String titolo;
-  final String luogo;
-  final DateTime data;
-
-  Viaggio({
-    required this.titolo,
-    required this.luogo,
-    required this.data,
-  });
-}
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key}); // 1. RIPULITO: Rimosso il carattere cinese da 'key'
@@ -31,10 +20,10 @@ class _HomePageState extends State<HomePage> {
 
   // Lista simulata di viaggi (Database temporaneo)
   final List<Viaggio> _tuttiIViaggi = [
-    Viaggio(titolo: 'Vacanze Estive', luogo: 'Barcellona', data: DateTime(2026, 08, 15)),
-    Viaggio(titolo: 'Capodanno a Londra', luogo: 'Londra', data: DateTime(2027, 01, 01)),
-    Viaggio(titolo: 'Laurea Amo', luogo: 'Salerno', data: DateTime(2026, 03, 10)),
-    Viaggio(titolo: 'Weekend Romantico', luogo: 'Parigi', data: DateTime(2025, 12, 25)),
+    Viaggio(titolo: 'Vacanze Estive', luogo: 'Barcellona', dataInizio: DateTime(2026, 08, 15), id: '0001', dataFine: DateTime(2026, 08, 22), budgetPrevisto: 500),
+    Viaggio(titolo: 'Capodanno a Londra', luogo: 'Londra', dataInizio: DateTime(2027, 01, 01), id: '002', dataFine: DateTime(2027, 01, 08), budgetPrevisto: 700),
+    Viaggio(titolo: 'Laurea Amo', luogo: 'Salerno', dataInizio: DateTime(2026, 03, 10), id: '0003', dataFine: DateTime(2026, 03, 18), budgetPrevisto: 400),
+    Viaggio(titolo: 'Weekend Romantico', luogo: 'Parigi', dataInizio: DateTime(2025, 12, 25), id: '0004', dataFine: DateTime(2025, 12, 29), budgetPrevisto: 500),
   ];
 
   // Lista che contiene i viaggi filtrati da mostrare sulla UI
@@ -60,7 +49,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _viaggiFiltrati = _tuttiIViaggi.where((viaggio) {
         // Determina lo stato del viaggio in base alla data attuale
-        String statoViaggio = viaggio.data.isAfter(oggi) ? 'da fare' : 'passato';
+        String statoViaggio = viaggio.dataInizio.isAfter(oggi) ? 'da fare' : 'passato';
 
         // 1. Controllo Filtro Testuale (Luogo, Stato o Titolo)
         bool matchTesto = viaggio.luogo.toLowerCase().contains(query) || 
@@ -70,9 +59,9 @@ class _HomePageState extends State<HomePage> {
         // 2. Controllo Filtro Data (se è stata selezionata una data dal calendario)
         bool matchData = true;
         if (_selectedDate != null) {
-          matchData = viaggio.data.year == _selectedDate!.year &&
-                    viaggio.data.month == _selectedDate!.month &&
-                    viaggio.data.day == _selectedDate!.day;
+          matchData = viaggio.dataInizio.year == _selectedDate!.year &&
+                      viaggio.dataInizio.month == _selectedDate!.month &&
+                      viaggio.dataInizio.day == _selectedDate!.day;
         }
 
         return matchTesto && matchData;
@@ -223,7 +212,7 @@ class _HomePageState extends State<HomePage> {
                           }
 
                           final viaggio = _viaggiFiltrati[index];
-                          bool isFuturo = viaggio.data.isAfter(oggi);
+                          bool isFuturo = viaggio.dataInizio.isAfter(oggi);
 
                           // RITORNA IL RETTANGOLO TRASFORMATO IN PULSANTE CLICCABILE
                           return Container(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:travel_app_02/route.dart';
 import 'BottomBar.dart'; // Import aggiornato con il nuovo nome del file
 
 class NewCost extends StatefulWidget {
@@ -312,6 +313,7 @@ class _NewCostState extends State<NewCost> {
                 child: ElevatedButton(
                   onPressed: () {
                     // Logica di salvataggio
+                    Navigator.pushReplacementNamed(context, AppRoutes.riepilogoViaggio);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black,

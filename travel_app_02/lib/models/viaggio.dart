@@ -4,7 +4,7 @@ import 'package:travel_app_02/models/tappa.dart';
 class Viaggio {
   String id;
   String titolo;
-  String descrizione;
+  String luogo;
   DateTime dataInizio;
   DateTime dataFine;
   double budgetPrevisto;
@@ -14,7 +14,7 @@ class Viaggio {
   Viaggio({
     required this.id,
     required this.titolo,
-    required this.descrizione,
+    required this.luogo,
     required this.dataInizio,
     required this.dataFine,
     required this.budgetPrevisto,
