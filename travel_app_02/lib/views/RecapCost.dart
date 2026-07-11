@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:travel_app_02/models/spesa.dart';
+import 'package:travel_app_02/models/expense.dart';
 import 'BottomBar.dart';
 
 class RecapCost extends StatelessWidget {
@@ -35,7 +35,7 @@ class RecapCost extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final spesaPassata = ModalRoute.of(context)!.settings.arguments as Spesa;
+    final spesaPassata = ModalRoute.of(context)!.settings.arguments as Expense;
     return Scaffold(
       backgroundColor: Colors.amber, 
 

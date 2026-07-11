@@ -1,9 +1,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:travel_app_02/controllers/viaggioController.dart';
+import 'package:travel_app_02/controllers/trip_Controller.dart';
 import 'package:intl/intl.dart';
-import 'package:travel_app_02/models/viaggio.dart';
+import 'package:travel_app_02/models/trip.dart';
 
 class AddTrip extends StatefulWidget {
   const AddTrip({super.key});
@@ -18,7 +18,7 @@ class _AddTripState extends State<AddTrip> {
   final _destinazioneController = TextEditingController();
   final _budgetController = TextEditingController();
   final _noteController = TextEditingController();
-  final ViaggioController _viaggioController = ViaggioController();
+  final TripController _viaggioController = TripController();
 
   // Gestione Date
   DateTime? _dataPartenza;
@@ -275,7 +275,7 @@ Future<void> _selezionaDateRange(BuildContext context) async {
                     String dataPartenzaStr = format.format(_dataPartenza!);
                     String dataRitornoStr = format.format(_dataRitorno!);
 
-                    List<Viaggio> listaViaggiAttuali = []; 
+                    List<Trip> listaViaggiAttuali = []; 
                     
                     bool isValido = _viaggioController.validaNuovoViaggio(
                       _titoloController.text, 

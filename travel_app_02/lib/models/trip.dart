@@ -1,17 +1,17 @@
-import 'package:travel_app_02/models/spesa.dart';
-import 'package:travel_app_02/models/tappa.dart';
+import 'package:travel_app_02/models/expense.dart';
+import 'package:travel_app_02/models/stay.dart';
 
-class Viaggio {
+class Trip {
   String id;
   String titolo;
   String luogo;
   DateTime dataInizio;
   DateTime dataFine;
   double budgetPrevisto;
-  List<Tappa> tappe;
-  List<Spesa> spese;
+  List<Stay> tappe;
+  List<Expense> spese;
 
-  Viaggio({
+  Trip({
     required this.id,
     required this.titolo,
     required this.luogo,
@@ -35,8 +35,8 @@ class Viaggio {
   }
 
   // Da riga SQLite a Oggetto
-  factory Viaggio.fromMap(Map<String, dynamic> map) {
-    return Viaggio(
+  factory Trip.fromMap(Map<String, dynamic> map) {
+    return Trip(
       id: map['id'].toString(),
       titolo: map['titolo'],
       luogo: map['luogo'],

@@ -7,12 +7,14 @@ import 'package:travel_app_02/views/NewCost.dart';
 import 'package:travel_app_02/views/ProfilePage.dart';
 import 'package:travel_app_02/views/RecapCost.dart';
 import 'package:travel_app_02/views/StatsPage.dart';
+import 'package:travel_app_02/views/NewStay.dart';
+import 'package:travel_app_02/views/RecapStay.dart';
 import 'package:travel_app_02/views/start.dart'; 
 import 'package:travel_app_02/views/login.dart';   // Sbloccato import login
 import 'package:travel_app_02/views/sign_up.dart'; // Sbloccato import registrazione
-import 'package:travel_app_02/models/viaggio.dart';
-import 'package:travel_app_02/controllers/riepilogo_viaggio_controller.dart';
-import 'package:travel_app_02/views/riepilogo_viaggio.dart';
+import 'package:travel_app_02/models/trip.dart';
+import 'package:travel_app_02/controllers/rec_trip_controller.dart';
+import 'package:travel_app_02/views/RecapTrip.dart';
 
 class AppRoutes {
   static const String start = '/';
@@ -26,6 +28,8 @@ class AppRoutes {
   static const String statsPage = '/stats_page';
   static const String recapCost = '/recap_cost';
   static const String newCost = '/new_cost';
+  static const String newStage = '/new_stage';
+  static const String recapStage = '/recap_stage';
 
 
 
@@ -39,15 +43,17 @@ class AppRoutes {
       profile: (context) => const ProfilePage(),
       addTrip: (context) => const AddTrip(),
       riepilogoViaggio: (context) {
-        final viaggioInArrivo = ModalRoute.of(context)!.settings.arguments as Viaggio;
-        return RiepilogoViaggio(
-          controller: RiepilogoViaggioController(trip: viaggioInArrivo),
+        final viaggioInArrivo = ModalRoute.of(context)!.settings.arguments as Trip;
+        return RecapTrip(
+          controller: RecTripController(trip: viaggioInArrivo),
         );
       },
       addTrip: (context) => const AddTrip(),
       statsPage: (context) => const StatsPage(),
       recapCost: (context) => const RecapCost(),
       newCost: (context) => const NewCost(),
+      newStage: (context) => const NewStay(),
+      recapStage: (context) => const RecapStay(),
     };
   }
 }

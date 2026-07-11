@@ -67,7 +67,10 @@ class DatabaseHelper {
       CREATE TABLE tappe (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         titolo TEXT NOT NULL,
+        data TEXT,
+        ora TEXT,
         descrizione TEXT,
+        costoPrevisto REAL,
         idViaggio INTEGER NOT NULL,
         FOREIGN KEY (idViaggio) REFERENCES viaggi (id) ON DELETE CASCADE
       )
