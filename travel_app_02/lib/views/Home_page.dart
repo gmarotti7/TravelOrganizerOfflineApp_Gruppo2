@@ -288,40 +288,42 @@ class _HomePageState extends State<HomePage> {
   Widget _buildBottoneNuovoViaggio() {
     return InkWell(
       onTap: () async {
-        final risultato = await Navigator.pushNamed(context, AppRoutes.addTrip);
+      final risultato = await Navigator.pushNamed(context, AppRoutes.addTrip);
 
-        if (risultato != null && risultato is Map<String, dynamic>) {
-          int idUtenteSicuro = Sessione.idUtenteAttuale ?? 1;
+      if (risultato != null && risultato is Map) {
+        
+        int idUtenteSicuro = Sessione.idUtenteAttuale ?? 1;
 
-          Viaggio nuovo = Viaggio(
-            titolo: risultato['titolo'],
-            luogo: risultato['luogo'],
-            dataInizio: risultato['dataInizio'],
-            dataFine: risultato['dataFine'], 
-            id: '0', 
-            budgetPrevisto: risultato['budgetPrevisto'],
-          );
+        Viaggio nuovo = Viaggio(
+          titolo: risultato['titolo'],
+          luogo: risultato['luogo'],
+          dataInizio: risultato['dataInizio'],
+          dataFine: risultato['dataFine'], 
+          id: '0', 
+          budgetPrevisto: risultato['budgetPrevisto'],
+        );
+        
+        try {
           
-          try {
-            Viaggio salvato = await _controller.salvaNuovoViaggio(nuovo, idUtenteSicuro);
-            
-            setState(() {
-              _tuttiIViaggi.add(salvato);
-              _applicaFiltri();
-            });
-          } catch (e) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Errore di salvataggio. Hai fatto il login correttamente? ($e)'),
-                  backgroundColor: Colors.red,
-                  duration: const Duration(seconds: 4),
-                ),
-              );
-            }
+          Viaggio salvato = await _controller.salvaNuovoViaggio(nuovo, idUtenteSicuro);
+          
+          setState(() {
+            _tuttiIViaggi.add(salvato);
+            _applicaFiltri(); 
+          });
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Errore DB: $e'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 4),
+              ),
+            );
           }
         }
-      },
+      }
+    },
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 18),
