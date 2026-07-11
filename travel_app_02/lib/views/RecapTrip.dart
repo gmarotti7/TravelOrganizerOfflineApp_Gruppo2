@@ -8,30 +8,34 @@ import 'package:travel_app_02/models/trip.dart';
 import 'package:travel_app_02/route.dart';
 
 class RecapTrip extends StatefulWidget {
-  final RecTripController controller;
-
-  const RecapTrip({
-    super.key,
-    required this.controller,
-  });
+  // Rimosso l'obbligo di ricevere il controller dall'esterno!
+  const RecapTrip({super.key});
 
   @override
   State<RecapTrip> createState() => _RecapTripState();
 }
 
 class _RecapTripState extends State<RecapTrip> {
+  // Dichiariamo il controller interno
+  RecTripController? _controller;
+  
   final StayController _tappaController = StayController();
   List<Stay> _tappe = [];
   bool _caricamentoTappe = true;
 
   @override
-  void initState() {
-    super.initState();
-    _caricaTappe();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Ripristiniamo la cattura automatica del viaggio dalla memoria
+    if (_controller == null) {
+      final trip = ModalRoute.of(context)!.settings.arguments as Trip;
+      _controller = RecTripController(trip: trip);
+      _caricaTappe();
+    }
   }
 
   Future<void> _caricaTappe() async {
-    final idViaggio = int.tryParse(widget.controller.trip.id);
+    final idViaggio = int.tryParse(_controller!.trip.id);
     if (idViaggio == null) {
       setState(() => _caricamentoTappe = false);
       return;
@@ -49,8 +53,11 @@ class _RecapTripState extends State<RecapTrip> {
 
   @override
   Widget build(BuildContext context) {
+    // Schermata di caricamento finché non aggancia i dati
+    if (_controller == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+
     const Color gialloSfondo = Color(0xFFFFB84D);
-    final trip = widget.controller.trip;
+    final trip = _controller!.trip;
 
     return Scaffold(
       backgroundColor: gialloSfondo,
@@ -68,7 +75,7 @@ class _RecapTripState extends State<RecapTrip> {
             height: 20,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: widget.controller.statoViaggioColor,
+              color: _controller!.statoViaggioColor,
               border: Border.all(color: Colors.black, width: 2),
             ),
           ),
@@ -79,7 +86,7 @@ class _RecapTripState extends State<RecapTrip> {
               if (valore == 'elimina') {
                 _mostraConfermaEliminazioneViaggio(context);
               } else if (valore == 'modifica') {
-                // TODO: Navigator.pushNamed(context, AppRoutes.addTrip, arguments: trip);
+                // TODO: Aggiungi navigazione modifica
               }
             },
             itemBuilder: (context) => const [
@@ -161,20 +168,16 @@ class _RecapTripState extends State<RecapTrip> {
 
                   const SizedBox(height: 8),
                   
-                  // PULSANTE AGGIUNGI TAPPA CORRETTO
                   OutlinedButton(
                     onPressed: () async {
-                      // 1. Apri la schermata per creare la nuova tappa
                       final risultato = await Navigator.pushNamed(context, AppRoutes.newStay);
                       
-                      // 2. Se l'utente ha compilato e salvato
                       if (risultato != null && risultato is Stay) {
                         final idViaggioInt = int.tryParse(trip.id);
                         if (idViaggioInt != null) {
                           final tappaSalvata = await _tappaController.salvaNuovaTappa(risultato, idViaggioInt);
                           setState(() => _tappe.add(tappaSalvata));
                         } else {
-                          // Se l'id del viaggio non è intero, aggiungi la tappa alla lista locale
                           setState(() => _tappe.add(risultato));
                         }
                       }
@@ -220,11 +223,11 @@ class _RecapTripState extends State<RecapTrip> {
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       Text(
-                        _formatValuta(widget.controller.speseTotali),
+                        _formatValuta(_controller!.speseTotali),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: widget.controller.speseTotaliColor,
+                          color: _controller!.speseTotaliColor,
                         ),
                       ),
                     ],
@@ -240,7 +243,7 @@ class _RecapTripState extends State<RecapTrip> {
                 final nuovaSpesa = await Navigator.pushNamed(context, AppRoutes.newCost);
                 if (nuovaSpesa != null && nuovaSpesa is Expense) {
                   setState(() {
-                    widget.controller.aggiungiSpesa(nuovaSpesa);
+                    _controller!.aggiungiSpesa(nuovaSpesa);
                   });
                 }
               },
@@ -263,7 +266,6 @@ class _RecapTripState extends State<RecapTrip> {
 
             const SizedBox(height: 16),
 
-            // Contenitore Bianco per la LISTA SPESE
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -326,7 +328,7 @@ class _RecapTripState extends State<RecapTrip> {
   }
 
   void _mostraConfermaEliminazioneViaggio(BuildContext context) {
-    final trip = widget.controller.trip;
+    final trip = _controller!.trip;
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(

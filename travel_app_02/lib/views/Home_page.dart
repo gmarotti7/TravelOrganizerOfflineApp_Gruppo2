@@ -2,9 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:travel_app_02/route.dart';
 import 'BottomBar.dart';
-import 'add_trip.dart'; // AGGIUNTO: Import della pagina per creare il viaggio
-import 'package:travel_app_02/models/trip.dart'; // AGGIUNTO: Import del modello del tuo collega
-import 'package:travel_app_02/views/Add_trip.dart';
+import 'package:travel_app_02/models/trip.dart';
 import 'package:travel_app_02/sessione.dart';
 import 'package:travel_app_02/controllers/trip_controller.dart';
 

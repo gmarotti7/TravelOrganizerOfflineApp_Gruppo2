@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:travel_app_02/models/expense.dart';
-import 'package:travel_app_02/route.dart';
-import 'BottomBar.dart'; // Import aggiornato con il nuovo nome del file
+import 'BottomBar.dart';
 
 class NewCost extends StatefulWidget {
   const NewCost({Key? key}) : super(key: key);

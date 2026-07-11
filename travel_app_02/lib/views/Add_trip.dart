@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'Add_check.dart'; // Assicurati che il nome del file sia corretto!
-import 'package:intl/intl.dart';
 import 'package:travel_app_02/controllers/trip_Controller.dart';
-import 'package:intl/intl.dart';
-import 'package:travel_app_02/models/trip.dart';
 
 class AddTrip extends StatefulWidget {
   const AddTrip({super.key});
