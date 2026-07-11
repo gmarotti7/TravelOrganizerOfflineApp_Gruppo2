@@ -5,8 +5,6 @@ import 'package:travel_app_02/controllers/stay_controller.dart';
 import 'package:travel_app_02/models/expense.dart';
 import 'package:travel_app_02/models/stay.dart';
 import 'package:travel_app_02/models/trip.dart';
-
-
 import 'package:travel_app_02/route.dart';
 
 class RecapTrip extends StatefulWidget {
@@ -97,8 +95,6 @@ class _RecapTripState extends State<RecapTrip> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // La descrizione non è ancora un campo di Viaggio: se/quando verrà aggiunta
-            // dal tuo compagno nella creazione viaggio, va sostituita qui sotto.
             Text(
               trip.luogo,
               textAlign: TextAlign.center,
@@ -164,14 +160,23 @@ class _RecapTripState extends State<RecapTrip> {
                     ),
 
                   const SizedBox(height: 8),
+                  
+                  // PULSANTE AGGIUNGI TAPPA CORRETTO
                   OutlinedButton(
                     onPressed: () async {
-                      final idViaggio = int.tryParse(trip.id);
-                      if (idViaggio == null) return;
+                      // 1. Apri la schermata per creare la nuova tappa
                       final risultato = await Navigator.pushNamed(context, AppRoutes.newStay);
+                      
+                      // 2. Se l'utente ha compilato e salvato
                       if (risultato != null && risultato is Stay) {
-                        final tappaSalvata = await _tappaController.salvaNuovaTappa(risultato, idViaggio);
-                        setState(() => _tappe.add(tappaSalvata));
+                        final idViaggioInt = int.tryParse(trip.id);
+                        if (idViaggioInt != null) {
+                          final tappaSalvata = await _tappaController.salvaNuovaTappa(risultato, idViaggioInt);
+                          setState(() => _tappe.add(tappaSalvata));
+                        } else {
+                          // Se l'id del viaggio non è intero, aggiungi la tappa alla lista locale
+                          setState(() => _tappe.add(risultato));
+                        }
                       }
                     },
                     child: const Text("+ Aggiungi Tappa"),
@@ -331,8 +336,6 @@ class _RecapTripState extends State<RecapTrip> {
           TextButton(
             onPressed: () {
               Navigator.pop(dialogContext);
-              // TODO: chiamare un metodo tipo ViaggioController.eliminaViaggio(trip.id)
-              // e poi tornare alla Home rimuovendo questa schermata dallo stack.
               Navigator.pop(context);
             },
             child: const Text('SÌ'),

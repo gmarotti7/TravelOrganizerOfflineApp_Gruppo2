@@ -39,10 +39,6 @@ class AppRoutes {
       home: (context) => const HomePage(),
       currencyConverter: (context) => const CurrencyConverter(),
       profile: (context) => const ProfilePage(),
-<<<<<<< HEAD
-=======
-      riepilogoViaggio: (context) => RiepilogoViaggio(),
->>>>>>> 7329ac7a70fb6965508f9af043e3e339c4573762
       addTrip: (context) => const AddTrip(),
       statsPage: (context) => const StatsPage(),
       newCost: (context) => const NewCost(),
