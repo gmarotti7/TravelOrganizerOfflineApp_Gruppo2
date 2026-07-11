@@ -2,22 +2,26 @@ import 'package:travel_app_02/models/utente.dart';
 import 'package:travel_app_02/services/database_helper.dart';
 
 class AuthController {
-  
+
   // Metodo per registrare un nuovo utente nel database
   Future<String?> registraUtente(Utente nuovoUtente) async {
     try {
       await DatabaseHelper.instance.insert('utenti', nuovoUtente.toMap());
       return null;
     } catch (e) {
-      
-      return e.toString(); 
+      return e.toString();
     }
   }
 
   // Metodo per aggiornare i dati di un utente esistente
   Future<String?> aggiornaUtente(Utente utenteModificato) async {
     try {
-      await DatabaseHelper.instance.update('utenti', utenteModificato.toMap(), whereArgs: [], where: '');
+      await DatabaseHelper.instance.update(
+        'utenti',
+        utenteModificato.toMap(),
+        where: 'id = ?',
+        whereArgs: [utenteModificato.id],
+      );
       return null; // Tutto ok!
     } catch (e) {
       return e.toString(); // Restituisce l'errore se qualcosa va storto

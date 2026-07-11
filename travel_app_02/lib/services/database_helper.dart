@@ -136,9 +136,8 @@ class DatabaseHelper {
   }
 
   // AGGIORNAMENTO
-  Future<int> update(String table, Map<String, dynamic> row, {required List<int> whereArgs, required String where}) async {
+  Future<int> update(String table, Map<String, dynamic> row, {required List<dynamic> whereArgs, required String where}) async {
     final db = await instance.database;
-    int id = row['id']; // Prende l'ID dell'oggetto che gli passiamo
-    return await db.update(table, row, where: 'id = ?', whereArgs: [id]);
+    return await db.update(table, row, where: where, whereArgs: whereArgs);
   }
 }
