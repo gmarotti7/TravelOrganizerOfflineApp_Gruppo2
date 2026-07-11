@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:travel_app_02/models/spesa.dart';
-import 'package:travel_app_02/models/viaggio.dart';
+import 'package:travel_app_02/models/expense.dart';
+import 'package:travel_app_02/models/trip.dart';
 
-class RiepilogoViaggioController extends ChangeNotifier {
-  final Viaggio trip;
+class RecTripController extends ChangeNotifier {
+  final Trip trip;
 
-  RiepilogoViaggioController({required this.trip});
+  RecTripController({required this.trip});
   
   double get speseTotali {
     return trip.spese.fold(0, (sum, item) => sum + item.importo);
@@ -30,7 +30,7 @@ class RiepilogoViaggioController extends ChangeNotifier {
     }
   }
 
-  void aggiungiSpesa(Spesa spesa) {
+  void aggiungiSpesa(Expense spesa) {
     trip.spese.add(spesa);
     notifyListeners(); 
   }

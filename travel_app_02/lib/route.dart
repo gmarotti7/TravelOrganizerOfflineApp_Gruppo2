@@ -7,6 +7,8 @@ import 'package:travel_app_02/views/NewCost.dart';
 import 'package:travel_app_02/views/ProfilePage.dart';
 import 'package:travel_app_02/views/RecapCost.dart';
 import 'package:travel_app_02/views/StatsPage.dart';
+import 'package:travel_app_02/views/NewStay.dart';
+import 'package:travel_app_02/views/RecapStay.dart';
 import 'package:travel_app_02/views/start.dart'; 
 import 'package:travel_app_02/views/login.dart';   // Sbloccato import login
 import 'package:travel_app_02/views/sign_up.dart'; // Sbloccato import registrazione
@@ -36,7 +38,13 @@ class AppRoutes {
       home: (context) => const HomePage(),
       currencyConverter: (context) => const CurrencyConverter(),
       profile: (context) => const ProfilePage(),
-      riepilogoViaggio: (context) => RiepilogoViaggio(),
+      addTrip: (context) => const AddTrip(),
+      riepilogoViaggio: (context) {
+        final viaggioInArrivo = ModalRoute.of(context)!.settings.arguments as Viaggio;
+        return RiepilogoViaggio(
+          controller: RiepilogoViaggioController(trip: viaggioInArrivo),
+        );
+      },
       addTrip: (context) => const AddTrip(),
       statsPage: (context) => const StatsPage(),
       newCost: (context) => const NewCost(),

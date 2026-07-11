@@ -1,4 +1,4 @@
-class Spesa {
+class Expense {
   final String id;
   final String titolo;
   final double importo;
@@ -11,7 +11,7 @@ class Spesa {
   final String? viaggioAssociato;
   final String? attivitaAssociata;
 
-  Spesa({
+  Expense({
     required this.id, 
     required this.titolo, 
     required this.importo,
@@ -34,8 +34,8 @@ class Spesa {
     };
   }
 
-  factory Spesa.fromMap(Map<String, dynamic> map) {
-    return Spesa(
+  factory Expense.fromMap(Map<String, dynamic> map) {
+    return Expense(
       id: map['id'].toString(),
       titolo: map['titolo'],
       importo: map['importo'],

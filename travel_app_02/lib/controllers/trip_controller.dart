@@ -1,11 +1,11 @@
 import 'package:intl/intl.dart';
-import 'package:travel_app_02/models/viaggio.dart';
+import 'package:travel_app_02/models/trip.dart';
 import 'package:travel_app_02/services/database_helper.dart';
 
-class ViaggioController {
+class TripController {
   
   // Metodo di validazione incapsulato nel Controller
-  bool validaNuovoViaggio(String nuovoTitolo, String dataInizioStr, String dataFineStr, List<Viaggio> viaggiEsistenti) {
+  bool validaNuovoViaggio(String nuovoTitolo, String dataInizioStr, String dataFineStr, List<Trip> viaggiEsistenti) {
     final format = DateFormat('dd/MM/yyyy');
     DateTime nuovaDataInizio = format.parse(dataInizioStr);
     DateTime nuovaDataFine = format.parse(dataFineStr);
@@ -36,7 +36,7 @@ class ViaggioController {
   }
 
 
-  bool validaOperazioneSpesa(DateTime dataSpesa, Viaggio viaggio) {
+  bool validaOperazioneSpesa(DateTime dataSpesa, Trip viaggio) {
     DateTime oggi = DateTime.now();
     DateTime soloDataOggi = DateTime(oggi.year, oggi.month, oggi.day);
 
@@ -55,7 +55,7 @@ class ViaggioController {
 
 
   // Salva il viaggio nel DB
-  Future<Viaggio> salvaNuovoViaggio(Viaggio viaggio, int idUtente) async {
+  Future<Trip> salvaNuovoViaggio(Trip viaggio, int idUtente) async {
     final db = await DatabaseHelper.instance.database;
     final id = await db.insert('viaggi', viaggio.toMap(idUtente));
     viaggio.id = id.toString();
@@ -63,14 +63,14 @@ class ViaggioController {
   }
 
   // Carica i viaggi dell'utente dal DB
-  Future<List<Viaggio>> caricaViaggiUtente(int idUtente) async {
+  Future<List<Trip>> caricaViaggiUtente(int idUtente) async {
     final db = await DatabaseHelper.instance.database;
     final List<Map<String, dynamic>> mappe = await db.query(
       'viaggi',
       where: 'idUtente = ?',
       whereArgs: [idUtente],
     );
-    return mappe.map((mappa) => Viaggio.fromMap(mappa)).toList();
+    return mappe.map((mappa) => Trip.fromMap(mappa)).toList();
   }
   
 }

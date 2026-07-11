@@ -97,8 +97,10 @@ class _LoginState extends State<Login> {
               child: IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
                 onPressed: () {
-                  Navigator.pop(context); // Torna indietro alla schermata precedente (start)
-                },
+  // Forza il Navigator ad andare alla rotta definita come start
+  // e rimuovi tutto ciò che c'è dietro (false)
+  Navigator.pushNamedAndRemoveUntil(context, AppRoutes.start, (route) => false);
+},
               ),
             ),
             

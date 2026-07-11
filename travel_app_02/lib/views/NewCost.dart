@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:travel_app_02/models/spesa.dart';
+import 'package:travel_app_02/models/expense.dart';
+import 'package:travel_app_02/route.dart';
 import 'BottomBar.dart'; // Import aggiornato con il nuovo nome del file
 
 class NewCost extends StatefulWidget {
@@ -417,7 +418,7 @@ class _NewCostState extends State<NewCost> {
                 child: ElevatedButton(
                   onPressed: () {
                     // Logica di salvataggio
-                    final nuovaSpesa = Spesa(
+                    final nuovaSpesa = Expense(
                       id: DateTime.now().toString(), // ID univoco
                       titolo: _titoloController.text.isEmpty ? 'Nuova Spesa' : _titoloController.text,
                       importo: double.tryParse(_costoController.text.replaceAll(',', '.')) ?? 0.0,

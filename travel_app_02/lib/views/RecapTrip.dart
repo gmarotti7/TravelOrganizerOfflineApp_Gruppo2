@@ -1,30 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
-import 'package:travel_app_02/controllers/riepilogo_viaggio_controller.dart';
-import 'package:travel_app_02/models/spesa.dart';
-import 'package:travel_app_02/models/viaggio.dart';
+import 'package:travel_app_02/controllers/rec_trip_controller.dart';
+import 'package:travel_app_02/controllers/stay_controller.dart';
+import 'package:travel_app_02/models/expense.dart';
+import 'package:travel_app_02/models/stay.dart';
+import 'package:travel_app_02/models/trip.dart';
 import 'package:travel_app_02/route.dart';
 
-class RiepilogoViaggio extends StatefulWidget {
-  const RiepilogoViaggio({super.key});
+class RecapTrip extends StatefulWidget {
+  final RecTripController controller;
+
+  const RecapTrip({
+    super.key,
+    required this.controller,
+  });
 
   @override
-  State<RiepilogoViaggio> createState() => _RiepilogoViaggioState();
+  State<RecapTrip> createState() => _RecapTripState();
 }
 
-class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
-  RiepilogoViaggioController? _controller;
+class _RecapTripState extends State<RecapTrip> {
+  final StayController _tappaController = StayController();
+  List<Stay> _tappe = [];
+  bool _caricamentoTappe = true;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Leggiamo il viaggio passato dalla HomePage
-    if (_controller == null) {
-      final viaggio = ModalRoute.of(context)!.settings.arguments as Viaggio;
-      // Inizializziamo il controller con il vero viaggio cliccato
-      _controller = RiepilogoViaggioController(trip: viaggio);
+  void initState() {
+    super.initState();
+    _caricaTappe();
+  }
+
+  Future<void> _caricaTappe() async {
+    final idViaggio = int.tryParse(widget.controller.trip.id);
+    if (idViaggio == null) {
+      setState(() => _caricamentoTappe = false);
+      return;
     }
+    final tappeDb = await _tappaController.caricaTappeViaggio(idViaggio);
+    setState(() {
+      _tappe = tappeDb;
+      _caricamentoTappe = false;
+    });
   }
 
   String _formatValuta(double importo) {
@@ -33,10 +49,8 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
 
   @override
   Widget build(BuildContext context) {
-    if (_controller == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-
     const Color gialloSfondo = Color(0xFFFFB84D);
-    final viaggio = _controller!.trip;
+    final trip = widget.controller.trip;
 
     return Scaffold(
       backgroundColor: gialloSfondo,
@@ -45,7 +59,7 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
         elevation: 0,
         leading: const BackButton(color: Colors.black),
         title: Text(
-          viaggio.titolo, // Mostra il VERO titolo
+          trip.titolo,
           style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         actions: [
@@ -54,14 +68,20 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
             height: 20,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: _controller!.statoViaggioColor, // Usa il colore in base alle date reali
+              color: widget.controller.statoViaggioColor,
               border: Border.all(color: Colors.black, width: 2),
             ),
           ),
           const SizedBox(width: 8),
           PopupMenuButton<String>(
             icon: const Icon(Icons.menu, color: Colors.black),
-            onSelected: (valore) {},
+            onSelected: (valore) {
+              if (valore == 'elimina') {
+                _mostraConfermaEliminazioneViaggio(context);
+              } else if (valore == 'modifica') {
+                // TODO: Navigator.pushNamed(context, AppRoutes.addTrip, arguments: trip);
+              }
+            },
             itemBuilder: (context) => const [
               PopupMenuItem(value: 'modifica', child: Text('MODIFICA VIAGGIO')),
               PopupMenuItem(value: 'elimina', child: Text('ELIMINA VIAGGIO')),
@@ -76,7 +96,7 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              "Destinazione: ${viaggio.luogo}", // Mostra la VERA destinazione
+              trip.luogo,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.black,
@@ -103,20 +123,63 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
                   ),
                   const SizedBox(height: 8),
 
-                  // Carica le VERE tappe (se ci sono)
-                  if (viaggio.tappe.isEmpty)
-                     const Text("Nessuna tappa aggiunta.", style: TextStyle(fontStyle: FontStyle.italic)),
-                  ...viaggio.tappe.map(
-                    (tappa) => Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                      margin: const EdgeInsets.only(bottom: 6),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.black54),
-                        borderRadius: BorderRadius.circular(6),
+                  if (_caricamentoTappe)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: CircularProgressIndicator(),
+                    )
+                  else if (_tappe.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Text("Nessuna tappa ancora aggiunta"),
+                    )
+                  else
+                    ..._tappe.map(
+                      (tappa) => InkWell(
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.recapStay,
+                            arguments: tappa,
+                          );
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                          margin: const EdgeInsets.only(bottom: 6),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black54),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            "- ${tappa.titolo}",
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ),
                       ),
-                      child: Text("- ${tappa.titolo}", style: const TextStyle(fontWeight: FontWeight.w500)),
                     ),
+
+                  const SizedBox(height: 8),
+                  
+                  // PULSANTE AGGIUNGI TAPPA CORRETTO
+                  OutlinedButton(
+                    onPressed: () async {
+                      // 1. Apri la schermata per creare la nuova tappa
+                      final risultato = await Navigator.pushNamed(context, AppRoutes.newStay);
+                      
+                      // 2. Se l'utente ha compilato e salvato
+                      if (risultato != null && risultato is Stay) {
+                        final idViaggioInt = int.tryParse(trip.id);
+                        if (idViaggioInt != null) {
+                          final tappaSalvata = await _tappaController.salvaNuovaTappa(risultato, idViaggioInt);
+                          setState(() => _tappe.add(tappaSalvata));
+                        } else {
+                          // Se l'id del viaggio non è intero, aggiungi la tappa alla lista locale
+                          setState(() => _tappe.add(risultato));
+                        }
+                      }
+                    },
+                    child: const Text("+ Aggiungi Tappa"),
                   ),
 
                   const SizedBox(height: 16),
@@ -157,11 +220,11 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       Text(
-                        _formatValuta(_controller!.speseTotali), // Calcolo REALE
+                        _formatValuta(widget.controller.speseTotali),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: _controller!.speseTotaliColor,
+                          color: widget.controller.speseTotaliColor,
                         ),
                       ),
                     ],
@@ -175,9 +238,9 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
             ElevatedButton(
               onPressed: () async {
                 final nuovaSpesa = await Navigator.pushNamed(context, AppRoutes.newCost);
-                if (nuovaSpesa != null && nuovaSpesa is Spesa) {
+                if (nuovaSpesa != null && nuovaSpesa is Expense) {
                   setState(() {
-                    _controller!.aggiungiSpesa(nuovaSpesa);
+                    widget.controller.aggiungiSpesa(nuovaSpesa);
                   });
                 }
               },
@@ -213,15 +276,14 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
                 children: [
                   const Text("LISTA SPESE:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
-                  
-                  if (viaggio.spese.isEmpty)
-                     const Text("Nessuna spesa registrata.", style: TextStyle(fontStyle: FontStyle.italic)),
-
-                  // Mostra le VERE spese collegate al viaggio
-                  ...viaggio.spese.map(
+                  ...trip.spese.map(
                     (spesa) => InkWell(
                       onTap: () {
-                        Navigator.pushNamed(context, AppRoutes.recapCost, arguments: spesa);
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.recapCost,
+                          arguments: spesa,
+                        );
                       },
                       child: Container(
                         width: double.infinity,
@@ -248,7 +310,7 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
             const SizedBox(height: 20),
 
             Text(
-              "BUDGET PREVISTO: ${_formatValuta(viaggio.budgetPrevisto)}", // VERO budget
+              "BUDGET PREVISTO: ${_formatValuta(trip.budgetPrevisto)}",
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
@@ -259,6 +321,30 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
             const SizedBox(height: 16),
           ],
         ),
+      ),
+    );
+  }
+
+  void _mostraConfermaEliminazioneViaggio(BuildContext context) {
+    final trip = widget.controller.trip;
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('CONFERMA ELIMINAZIONE VIAGGIO'),
+        content: Text('Sei sicuro di voler eliminare il viaggio "${trip.titolo}"?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              Navigator.pop(context);
+            },
+            child: const Text('SÌ'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('NO'),
+          ),
+        ],
       ),
     );
   }
