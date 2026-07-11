@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:travel_app_02/route.dart';
 import 'dart:math'; // Necessario per calcolare gli angoli del grafico a torta
 import 'BottomBar.dart'; // La tua barra di navigazione
 
@@ -7,7 +8,16 @@ class StatsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result){
+        if (!didPop) {
+        // Forziamo il ritorno alla Home
+          Navigator.pushReplacementNamed(context, AppRoutes.home);
+        }
+      },
+
+    child: Scaffold(
       backgroundColor: Colors.amber, // Sfondo giallo full-screen
       
       // --- BARRA SUPERIORE ---
@@ -153,6 +163,7 @@ class StatsPage extends StatelessWidget {
       
       // --- BOTTOM BAR ---
       bottomNavigationBar: const CustomBottomNavBar(),
+    ),
     );
   }
 

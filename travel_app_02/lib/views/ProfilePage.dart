@@ -17,7 +17,16 @@ class ProfilePage extends StatelessWidget {
     // 2. Recuperiamo l'ID della sessione (se sei loggato, sarà il tuo ID reale)
     final int idUtente = Sessione.idUtenteAttuale ?? 1;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result){
+        if (!didPop) {
+        // Forziamo il ritorno alla Home
+          Navigator.pushReplacementNamed(context, AppRoutes.home);
+        }
+      },
+
+    child: Scaffold(
       backgroundColor: Colors.amber,
       
       // --- BARRA SUPERIORE ---
@@ -179,6 +188,7 @@ class ProfilePage extends StatelessWidget {
       ),
       
       bottomNavigationBar: const CustomBottomNavBar(),
+    ),
     );
   }
 
