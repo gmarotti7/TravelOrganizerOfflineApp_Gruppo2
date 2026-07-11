@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:travel_app_02/route.dart';
-import 'package:travel_app_02/views/RecapTrip.dart'; // Unico import necessario
 
 void main() {
   runApp(const TravelApp());

@@ -1,5 +1,5 @@
-
 import 'package:flutter/material.dart';
+import 'Add_check.dart'; // Assicurati che il nome del file sia corretto!
 import 'package:intl/intl.dart';
 import 'package:travel_app_02/controllers/trip_Controller.dart';
 import 'package:intl/intl.dart';
@@ -34,11 +34,13 @@ class _AddTripState extends State<AddTrip> {
   final Map<String, bool> _oggettiMontagna = {'Scarponi': false, 'Giacca a vento': false, 'Borraccia': false};
   final Map<String, bool> _oggettiCitta = {'Mappa': false, 'Scarpe comode': false, 'Powerbank': false};
 
-  // Liste simulate (per tappe e checklist personalizzate che faremo in futuro)
+  // Liste simulate
   final List<String> _tappeAggiunte = ['Tappa 1: Hotel Roma', 'Tappa 2: Colosseo'];
-  final List<String> _checklistPersonalizzate = ['Lista Farmaci', 'Documenti di viaggio'];
+  
+  // MODIFICA 1: Ora la lista accetta Mappe (perché AddCheck ci restituisce {titolo: '...', items: [...]})
+  final List<Map<String, dynamic>> _checklistPersonalizzate = [];
 
-  // Valuta simulata (da recuperare in futuro dal sign_up)
+  // Valuta simulata
   final String _valutaScelta = '€';
 
   @override
@@ -50,12 +52,26 @@ class _AddTripState extends State<AddTrip> {
     super.dispose();
   }
 
-  // Funzione per selezionare il range di date corretta e visibile
-Future<void> _selezionaDateRange(BuildContext context) async {
+  // MODIFICA 2: Aggiunta la funzione per aprire la checklist e ricevere i dati
+  Future<void> _apriAggiungiChecklist() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AddCheck()),
+    );
+
+    // Se l'utente preme OK, salviamo i dati ricevuti
+    if (result != null && result is Map<String, dynamic>) {
+      setState(() {
+        _checklistPersonalizzate.add(result);
+      });
+    }
+  }
+
+  // Funzione per selezionare il range di date
+  Future<void> _selezionaDateRange(BuildContext context) async {
     final DateTime oggi = DateTime.now();
     final DateTimeRange? picked = await showDateRangePicker(
       context: context,
-      // Impostando 'oggi' come firstDate, l'utente non potrà selezionare date passate
       firstDate: oggi, 
       lastDate: DateTime(2030),
       builder: (context, child) {
@@ -63,11 +79,11 @@ Future<void> _selezionaDateRange(BuildContext context) async {
           data: ThemeData.dark().copyWith(
             scaffoldBackgroundColor: const Color(0xFF121212),
             colorScheme: const ColorScheme.dark(
-              primary: Color.fromRGBO(225, 170, 5, 1),    // Giallo ocra per i giorni selezionati
-              onPrimary: Colors.black,                    // Testo nero sopra i giorni evidenziati
-              surface: Color(0xFF1E1E1E),                 // Sfondo del corpo del calendario
-              onSurface: Colors.white,                    // Testo dei giorni futuri in bianco
-              onSurfaceVariant: Colors.white24,           // Colore per i giorni passati/disabilitati (grigio opaco)
+              primary: Color.fromRGBO(225, 170, 5, 1),
+              onPrimary: Colors.black,
+              surface: Color(0xFF1E1E1E),
+              onSurface: Colors.white,
+              onSurfaceVariant: Colors.white24,
             ),
             datePickerTheme: const DatePickerThemeData(
               backgroundColor: Color(0xFF121212),
@@ -88,10 +104,11 @@ Future<void> _selezionaDateRange(BuildContext context) async {
       });
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromRGBO(225, 170, 5, 1), // Giallo ocra
+      backgroundColor: const Color.fromRGBO(225, 170, 5, 1),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -111,15 +128,12 @@ Future<void> _selezionaDateRange(BuildContext context) async {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 1. INPUT TITOLO
               _buildTextField(controller: _titoloController, hintText: 'TITOLO'),
               const SizedBox(height: 15),
 
-              // 2. INPUT DESTINAZIONE
               _buildTextField(controller: _destinazioneController, hintText: 'DESTINAZIONE'),
               const SizedBox(height: 15),
 
-              // 3. SELETTORE DATA (DA / A)
               InkWell(
                 onTap: () => _selezionaDateRange(context),
                 child: Container(
@@ -139,7 +153,6 @@ Future<void> _selezionaDateRange(BuildContext context) async {
               ),
               const SizedBox(height: 15),
 
-              // 4. BOTTONE AGGIUNGI TAPPA
               _buildButtonNero(
                 testo: 'AGGIUNGI TAPPA',
                 onPressed: () {
@@ -147,7 +160,6 @@ Future<void> _selezionaDateRange(BuildContext context) async {
                 },
               ),
 
-              // LISTA DELLE TAPPE AGGIUNTE
               if (_tappeAggiunte.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Container(
@@ -172,22 +184,19 @@ Future<void> _selezionaDateRange(BuildContext context) async {
               ),
               const SizedBox(height: 15),
 
-              // SEZIONE SELEZIONE PACKLIST
               _buildPacklistCheckbox('MARE', _isMareSpuntato, _oggettiMare, (val) => setState(() => _isMareSpuntato = val!)),
               _buildPacklistCheckbox('MONTAGNA', _isMontagnaSpuntato, _oggettiMontagna, (val) => setState(() => _isMontagnaSpuntato = val!)),
               _buildPacklistCheckbox('CITTÀ', _isCittaSpuntato, _oggettiCitta, (val) => setState(() => _isCittaSpuntato = val!)),
 
               const SizedBox(height: 25),
 
-              // 5. BOTTONE NUOVA CHECKLIST
+              // MODIFICA 3: Collegato il bottone alla funzione vera
               _buildButtonNero(
-                testo: 'NUOVA CHECKLIST!',
-                onPressed: () {
-                  debugPrint("Naviga verso add_checklist.dart");
-                },
+                testo: 'NUOVA CHECKLIST',
+                onPressed: _apriAggiungiChecklist, // Ora questo funziona e apre l'altra pagina!
               ),
 
-              // LISTA DELLE CHECKLIST PERSONALIZZATE
+              // MODIFICA 4: Adattato il testo per mostrare il 'titolo' dalla mappa
               if (_checklistPersonalizzate.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 ..._checklistPersonalizzate.map((checklist) => Container(
@@ -197,10 +206,11 @@ Future<void> _selezionaDateRange(BuildContext context) async {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(checklist, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                      // Stampiamo la chiave 'titolo' della mappa
+                      Text(checklist['titolo'], style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
                       IconButton(
                         icon: const Icon(Icons.edit, color: Colors.black, size: 20),
-                        onPressed: () => debugPrint("Naviga verso recap_check.dart per modificare $checklist"),
+                        onPressed: () => debugPrint("Naviga verso recap_check.dart per modificare ${checklist['titolo']}"),
                       ),
                     ],
                   ),
@@ -209,7 +219,6 @@ Future<void> _selezionaDateRange(BuildContext context) async {
 
               const SizedBox(height: 25),
 
-              // 6. BUDGET PREVISTO
               Row(
                 children: [
                   const Text('BUDGET PREVISTO: ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
@@ -237,7 +246,6 @@ Future<void> _selezionaDateRange(BuildContext context) async {
               ),
               const SizedBox(height: 20),
 
-              // 7. SEZIONE NOTE
               Container(
                 height: 120,
                 padding: const EdgeInsets.all(4),
@@ -260,7 +268,6 @@ Future<void> _selezionaDateRange(BuildContext context) async {
               ),
               const SizedBox(height: 30),
 
-              // 8. BOTTONE CONFERMA FINALE
               _buildButtonNero(
                 testo: 'CONFERMA',
                 onPressed: () {
@@ -302,12 +309,7 @@ Future<void> _selezionaDateRange(BuildContext context) async {
                       );
                     }
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Compila tutti i campi! (Hai selezionato le date?)'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
+                    Navigator.pop(context);
                   }
                 },
               ),
@@ -319,7 +321,6 @@ Future<void> _selezionaDateRange(BuildContext context) async {
   }
 
   // --- HELPER WIDGETS ---
-
   Widget _buildTextField({required TextEditingController controller, required String hintText}) {
     return TextField(
       controller: controller,
