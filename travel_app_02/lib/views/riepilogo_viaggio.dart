@@ -1,66 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-
 import 'package:travel_app_02/controllers/riepilogo_viaggio_controller.dart';
 import 'package:travel_app_02/models/spesa.dart';
+import 'package:travel_app_02/models/viaggio.dart';
 import 'package:travel_app_02/route.dart';
 
 class RiepilogoViaggio extends StatefulWidget {
-  final RiepilogoViaggioController controller;
-
-  const RiepilogoViaggio({
-    super.key,
-    required this.controller,
-    });
-
+  const RiepilogoViaggio({super.key});
 
   @override
   State<RiepilogoViaggio> createState() => _RiepilogoViaggioState();
 }
 
 class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
-  
-  // --- DATI FITTIZI (MOCK) PER IL TEST GRAFICO ---
-  final String titoloViaggio = "Vacanza a Roma";
-  final String descrizioneViaggio = "Viaggio di relax di 5 giorni nella capitale con visita ai musei e tour gastronomico.";
-  final double budgetPrevisto = 800.00;
-  final double speseTotali = 135.50;
-  final Color coloreStato = Colors.green; // Verde: in corso/tutto ok
-  final Color coloreSpeseTotali = Colors.black;
-  
-  // Liste fittizie per simulare i modelli Tappa e Spesa
-  final List<String> tappeFittizie = [
-    "Arrivo a Termini e Check-in",
-    "Visita al Colosseo",
-    "Cena a Trastevere"
-  ];
-  
-  List<Spesa> listaSpese = [
-    Spesa(
-      id: '1', 
-      titolo: "Biglietto Treno", 
-      importo: 45.50, 
-      stato: 'Pagata', 
-      data: '12/08/2026', 
-      descrizione: 'Andata e ritorno', 
-      metodoPagamento: 'Carta di credito',
-      categoria: 'Trasporti',
-      viaggioAssociato: 'Vacanza a Roma', 
-      attivitaAssociata: 'Spostamento', 
-    ),
-    Spesa(
-      id: '2', 
-      titolo: "Cena Carbonara", 
-      importo: 35.00, 
-      stato: 'Pagata', 
-      data: '13/08/2026',
-      categoria: 'Cibo e Bevande',
-      viaggioAssociato: 'Vacanza a Roma',
-      attivitaAssociata: 'Cena in centro',
-    ),
-  ];
+  RiepilogoViaggioController? _controller;
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Leggiamo il viaggio passato dalla HomePage
+    if (_controller == null) {
+      final viaggio = ModalRoute.of(context)!.settings.arguments as Viaggio;
+      // Inizializziamo il controller con il vero viaggio cliccato
+      _controller = RiepilogoViaggioController(trip: viaggio);
+    }
+  }
 
   String _formatValuta(double importo) {
     return NumberFormat.currency(locale: 'it_IT', symbol: '€').format(importo);
@@ -68,7 +33,10 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
 
   @override
   Widget build(BuildContext context) {
+    if (_controller == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+
     const Color gialloSfondo = Color(0xFFFFB84D);
+    final viaggio = _controller!.trip;
 
     return Scaffold(
       backgroundColor: gialloSfondo,
@@ -77,7 +45,7 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
         elevation: 0,
         leading: const BackButton(color: Colors.black),
         title: Text(
-          titoloViaggio,
+          viaggio.titolo, // Mostra il VERO titolo
           style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         actions: [
@@ -86,7 +54,7 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
             height: 20,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: coloreStato,
+              color: _controller!.statoViaggioColor, // Usa il colore in base alle date reali
               border: Border.all(color: Colors.black, width: 2),
             ),
           ),
@@ -108,12 +76,13 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              descrizioneViaggio,
+              "Destinazione: ${viaggio.luogo}", // Mostra la VERA destinazione
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.black,
                 fontStyle: FontStyle.italic,
-                fontSize: 16,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 20),
@@ -134,7 +103,10 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
                   ),
                   const SizedBox(height: 8),
 
-                  ...tappeFittizie.map(
+                  // Carica le VERE tappe (se ci sono)
+                  if (viaggio.tappe.isEmpty)
+                     const Text("Nessuna tappa aggiunta.", style: TextStyle(fontStyle: FontStyle.italic)),
+                  ...viaggio.tappe.map(
                     (tappa) => Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -143,18 +115,12 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
                         border: Border.all(color: Colors.black54),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: Text(
-                        "- $tappa",
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                      ),
+                      child: Text("- ${tappa.titolo}", style: const TextStyle(fontWeight: FontWeight.w500)),
                     ),
                   ),
 
                   const SizedBox(height: 16),
-                  const Text(
-                    "PACKLIST",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
+                  const Text("PACKLIST", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
                   Container(
                     width: double.infinity,
@@ -167,10 +133,7 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
                   ),
 
                   const SizedBox(height: 16),
-                  const Text(
-                    "CHECKLIST",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
+                  const Text("CHECKLIST", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
                   Container(
                     width: double.infinity,
@@ -194,11 +157,11 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       Text(
-                        _formatValuta(speseTotali),
+                        _formatValuta(_controller!.speseTotali), // Calcolo REALE
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: coloreSpeseTotali,
+                          color: _controller!.speseTotaliColor,
                         ),
                       ),
                     ],
@@ -214,7 +177,7 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
                 final nuovaSpesa = await Navigator.pushNamed(context, AppRoutes.newCost);
                 if (nuovaSpesa != null && nuovaSpesa is Spesa) {
                   setState(() {
-                    listaSpese.add(nuovaSpesa);
+                    _controller!.aggiungiSpesa(nuovaSpesa);
                   });
                 }
               },
@@ -248,19 +211,17 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "LISTA SPESE:",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
+                  const Text("LISTA SPESE:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
-                  ...listaSpese.map(
+                  
+                  if (viaggio.spese.isEmpty)
+                     const Text("Nessuna spesa registrata.", style: TextStyle(fontStyle: FontStyle.italic)),
+
+                  // Mostra le VERE spese collegate al viaggio
+                  ...viaggio.spese.map(
                     (spesa) => InkWell(
                       onTap: () {
-                        Navigator.pushNamed(
-                          context, 
-                          AppRoutes.recapCost,
-                          arguments: spesa,
-                        );
+                        Navigator.pushNamed(context, AppRoutes.recapCost, arguments: spesa);
                       },
                       child: Container(
                         width: double.infinity,
@@ -273,14 +234,8 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              "- ${spesa.titolo}",
-                              style: const TextStyle(fontWeight: FontWeight.w500),
-                            ),
-                            Text(
-                              _formatValuta(spesa.importo),
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
+                            Text("- ${spesa.titolo}", style: const TextStyle(fontWeight: FontWeight.w500)),
+                            Text(_formatValuta(spesa.importo), style: const TextStyle(fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),
@@ -293,7 +248,7 @@ class _RiepilogoViaggioState extends State<RiepilogoViaggio> {
             const SizedBox(height: 20),
 
             Text(
-              "BUDGET PREVISTO: ${_formatValuta(budgetPrevisto)}",
+              "BUDGET PREVISTO: ${_formatValuta(viaggio.budgetPrevisto)}", // VERO budget
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontWeight: FontWeight.bold,

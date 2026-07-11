@@ -39,13 +39,7 @@ class AppRoutes {
       home: (context) => const HomePage(),
       currencyConverter: (context) => const CurrencyConverter(),
       profile: (context) => const ProfilePage(),
-      addTrip: (context) => const AddTrip(),
-      riepilogoViaggio: (context) {
-        final viaggioInArrivo = ModalRoute.of(context)!.settings.arguments as Viaggio;
-        return RiepilogoViaggio(
-          controller: RiepilogoViaggioController(trip: viaggioInArrivo),
-        );
-      },
+      riepilogoViaggio: (context) => RiepilogoViaggio(),
       addTrip: (context) => const AddTrip(),
       statsPage: (context) => const StatsPage(),
       newCost: (context) => const NewCost(),
