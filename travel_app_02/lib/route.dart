@@ -9,6 +9,10 @@ import 'package:travel_app_02/views/RecapCost.dart';
 import 'package:travel_app_02/views/StatsPage.dart';
 import 'package:travel_app_02/views/NewStay.dart';
 import 'package:travel_app_02/views/RecapStay.dart';
+import 'package:travel_app_02/views/Add_check.dart';
+import 'package:travel_app_02/views/RecapChecklist.dart';
+import 'package:travel_app_02/views/RecapPacklist.dart';
+import 'package:travel_app_02/views/EditTripField.dart';
 import 'package:travel_app_02/views/start.dart'; 
 import 'package:travel_app_02/views/login.dart';   
 import 'package:travel_app_02/views/sign_up.dart'; 
@@ -28,8 +32,12 @@ class AppRoutes {
   static const String statsPage = '/stats';
   static const String newCost = '/new_cost';
   static const String recapCost = '/recap_cost';
-  static const String newStay = '/new_stay';     // Nome rotta uniforme
-  static const String recapStay = '/recap_stay'; // Nome rotta uniforme
+  static const String newStay = '/new_stay';
+  static const String recapStay = '/recap_stay';
+  static const String addCheck = '/add_check';
+  static const String recapChecklist = '/recap_checklist';
+  static const String recapPacklist = '/recap_packlist';
+  static const String editTripField = '/edit_trip_field';
 
   static Map<String, WidgetBuilder> getRoutes() {
     return {
@@ -45,6 +53,10 @@ class AppRoutes {
       recapCost: (context) => const RecapCost(),
       newStay: (context) => const NewStay(),
       recapStay: (context) => const RecapStay(),
+      addCheck: (context) => const AddCheck(),
+      recapChecklist: (context) => const RecapChecklist(),
+      recapPacklist: (context) => const RecapPacklist(),
+      editTripField: (context) => const EditTripField(),
       riepilogoViaggio: (context) {
         final viaggioInArrivo = ModalRoute.of(context)!.settings.arguments as Trip;
         return RecapTrip(

@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'Add_check.dart'; // Assicurati che il nome del file sia corretto!
-import 'package:intl/intl.dart';
 import 'package:travel_app_02/controllers/trip_Controller.dart';
-import 'package:intl/intl.dart';
-import 'package:travel_app_02/models/trip.dart';
 
 class AddTrip extends StatefulWidget {
   const AddTrip({super.key});
@@ -24,19 +21,31 @@ class _AddTripState extends State<AddTrip> {
   DateTime? _dataPartenza;
   DateTime? _dataRitorno;
 
-  // Stato delle Packlist Consigliate
-  bool _isMareSpuntato = false;
-  bool _isMontagnaSpuntato = false;
-  bool _isCittaSpuntato = false;
+  // Packlist consigliata selezionata (al massimo una): null, 'MARE', 'MONTAGNA' o 'CITTÀ'
+  String? _packlistSelezionata;
 
   // Mappe per tracciare gli elementi spuntati dentro le liste consigliate
-  final Map<String, bool> _oggettiMare = {'Crema solare': false, 'Ciabatte': false, 'Costume': false};
-  final Map<String, bool> _oggettiMontagna = {'Scarponi': false, 'Giacca a vento': false, 'Borraccia': false};
-  final Map<String, bool> _oggettiCitta = {'Mappa': false, 'Scarpe comode': false, 'Powerbank': false};
+  final Map<String, bool> _oggettiMare = {'Crema solare': true, 'Ciabatte': true, 'Costume': true};
+  final Map<String, bool> _oggettiMontagna = {'Scarponi': true, 'Giacca a vento': true, 'Borraccia': true};
+  final Map<String, bool> _oggettiCitta = {'Mappa': true, 'Scarpe comode': true, 'Powerbank': true};
+
+  // Ritorna la mappa oggetti corrispondente al titolo passato
+  Map<String, bool> _mappaPerTitolo(String titolo) {
+    switch (titolo) {
+      case 'MARE':
+        return _oggettiMare;
+      case 'MONTAGNA':
+        return _oggettiMontagna;
+      case 'CITTÀ':
+        return _oggettiCitta;
+      default:
+        return {};
+    }
+  }
 
   // Liste simulate
   final List<String> _tappeAggiunte = ['Tappa 1: Hotel Roma', 'Tappa 2: Colosseo'];
-  
+
   // MODIFICA 1: Ora la lista accetta Mappe (perché AddCheck ci restituisce {titolo: '...', items: [...]})
   final List<Map<String, dynamic>> _checklistPersonalizzate = [];
 
@@ -72,7 +81,7 @@ class _AddTripState extends State<AddTrip> {
     final DateTime oggi = DateTime.now();
     final DateTimeRange? picked = await showDateRangePicker(
       context: context,
-      firstDate: oggi, 
+      firstDate: oggi,
       lastDate: DateTime(2030),
       builder: (context, child) {
         return Theme(
@@ -174,7 +183,7 @@ class _AddTripState extends State<AddTrip> {
                   ),
                 ),
               ],
-              
+
               const SizedBox(height: 30),
               const Center(
                 child: Text(
@@ -184,9 +193,9 @@ class _AddTripState extends State<AddTrip> {
               ),
               const SizedBox(height: 15),
 
-              _buildPacklistCheckbox('MARE', _isMareSpuntato, _oggettiMare, (val) => setState(() => _isMareSpuntato = val!)),
-              _buildPacklistCheckbox('MONTAGNA', _isMontagnaSpuntato, _oggettiMontagna, (val) => setState(() => _isMontagnaSpuntato = val!)),
-              _buildPacklistCheckbox('CITTÀ', _isCittaSpuntato, _oggettiCitta, (val) => setState(() => _isCittaSpuntato = val!)),
+              _buildPacklistRadio('MARE', _oggettiMare),
+              _buildPacklistRadio('MONTAGNA', _oggettiMontagna),
+              _buildPacklistRadio('CITTÀ', _oggettiCitta),
 
               const SizedBox(height: 25),
 
@@ -272,17 +281,31 @@ class _AddTripState extends State<AddTrip> {
                 testo: 'CONFERMA',
                 onPressed: () {
                   // Aggiunto controllo sulle date per sicurezza
-                  if (_titoloController.text.isNotEmpty && 
+                  if (_titoloController.text.isNotEmpty &&
                       _destinazioneController.text.isNotEmpty &&
                       _dataPartenza != null &&
                       _dataRitorno != null) {
-                    
+
+                    // Se l'utente ha scelto una packlist consigliata, prepariamo gli
+                    // elementi da salvare (solo quelli lasciati spuntati nella lista).
+                    Map<String, dynamic>? packlistScelta;
+                    if (_packlistSelezionata != null) {
+                      final mappaOggetti = _mappaPerTitolo(_packlistSelezionata!);
+                      packlistScelta = {
+                        'titolo': _packlistSelezionata,
+                        'elementi': mappaOggetti.entries
+                            .map((e) => {'nome': e.key, 'isChecked': e.value})
+                            .toList(),
+                      };
+                    }
+
                     final nuovoViaggioDati = {
                       'titolo': _titoloController.text,
                       'luogo': _destinazioneController.text,
                       'dataInizio': _dataPartenza, // Nome corretto per la Home
                       'dataFine': _dataRitorno,    // Aggiunto
                       'budgetPrevisto': double.tryParse(_budgetController.text.replaceAll(',', '.')) ?? 0.0, // Aggiunto
+                      'packlist': packlistScelta, // null se nessuna scelta
                     };
                     Navigator.pop(context, nuovoViaggioDati);
                   } else {
@@ -331,22 +354,23 @@ class _AddTripState extends State<AddTrip> {
     );
   }
 
-  Widget _buildPacklistCheckbox(String titolo, bool isSpuntato, Map<String, bool> mappaOggetti, Function(bool?) onChanged) {
+  Widget _buildPacklistRadio(String titolo, Map<String, bool> mappaOggetti) {
+    final bool isSelezionata = _packlistSelezionata == titolo;
     return Column(
       children: [
         Container(
           margin: const EdgeInsets.symmetric(vertical: 4),
           decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(5), border: Border.all(color: Colors.black, width: 2)),
-          child: CheckboxListTile(
+          child: RadioListTile<String>(
             title: Text(titolo, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-            value: isSpuntato,
+            value: titolo,
+            groupValue: _packlistSelezionata,
             activeColor: Colors.black,
-            checkColor: Colors.white,
             controlAffinity: ListTileControlAffinity.leading,
-            onChanged: onChanged,
+            onChanged: (val) => setState(() => _packlistSelezionata = isSelezionata ? null : val),
           ),
         ),
-        if (isSpuntato)
+        if (isSelezionata)
           Container(
             height: 110,
             margin: const EdgeInsets.only(left: 16, bottom: 8, right: 4),

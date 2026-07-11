@@ -2,11 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:travel_app_02/route.dart';
 import 'BottomBar.dart';
-import 'add_trip.dart'; // AGGIUNTO: Import della pagina per creare il viaggio
-import 'package:travel_app_02/models/trip.dart'; // AGGIUNTO: Import del modello del tuo collega
-import 'package:travel_app_02/views/Add_trip.dart';
+import 'package:travel_app_02/models/trip.dart';
 import 'package:travel_app_02/sessione.dart';
 import 'package:travel_app_02/controllers/trip_controller.dart';
+import 'package:travel_app_02/controllers/pack_controller.dart';
 
 class HomePage extends StatefulWidget{
   const HomePage({super.key});
@@ -18,7 +17,7 @@ class HomePage extends StatefulWidget{
 class _HomePageState extends State<HomePage> {
   // Controller per la barra di ricerca
   final _searchController = TextEditingController();
-  
+
   // Data selezionata tramite il calendario (null se nessun filtro data è attivo)
   DateTime? _selectedDate;
 
@@ -68,7 +67,7 @@ class _HomePageState extends State<HomePage> {
         String statoViaggio = viaggio.dataInizio.isAfter(oggi) ? 'da fare' : 'passato';
 
         // 1. Controllo Filtro Testuale
-        bool matchTesto = viaggio.luogo.toLowerCase().contains(query) || 
+        bool matchTesto = viaggio.luogo.toLowerCase().contains(query) ||
                           statoViaggio.contains(query) ||
                           viaggio.titolo.toLowerCase().contains(query);
 
@@ -150,7 +149,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 20),
 
               // 2. BARRA DI RICERCA CON LENTE E CALENDARIO
@@ -291,21 +290,32 @@ class _HomePageState extends State<HomePage> {
       final risultato = await Navigator.pushNamed(context, AppRoutes.addTrip);
 
       if (risultato != null && risultato is Map) {
-        
+
         int idUtenteSicuro = Sessione.idUtenteAttuale ?? 1;
 
           Trip nuovo = Trip(
             titolo: risultato['titolo'],
             luogo: risultato['luogo'],
             dataInizio: risultato['dataInizio'],
-            dataFine: risultato['dataFine'], 
-            id: '0', 
+            dataFine: risultato['dataFine'],
+            id: '0',
             budgetPrevisto: risultato['budgetPrevisto'],
           );
-          
+
           try {
             Trip salvato = await _controller.salvaNuovoViaggio(nuovo, idUtenteSicuro);
-            
+
+            // Se in Add_trip è stata scelta una packlist consigliata, la salviamo
+            // collegata al viaggio appena creato.
+            final packlistScelta = risultato['packlist'];
+            if (packlistScelta != null && packlistScelta is Map) {
+              await PackController().salvaPacklist(
+                packlistScelta['titolo'] as String,
+                List<Map<String, dynamic>>.from(packlistScelta['elementi'] as List),
+                int.parse(salvato.id),
+              );
+            }
+
             setState(() {
               _tuttiIViaggi.add(salvato);
               _applicaFiltri();

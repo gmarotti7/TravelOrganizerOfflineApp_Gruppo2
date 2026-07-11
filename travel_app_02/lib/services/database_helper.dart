@@ -94,6 +94,25 @@ class DatabaseHelper {
         FOREIGN KEY (idChecklist) REFERENCES checklist (id) ON DELETE CASCADE
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE packlist (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        titolo TEXT NOT NULL,
+        idViaggio INTEGER NOT NULL,
+        FOREIGN KEY (idViaggio) REFERENCES viaggi (id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE packlist_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nomeItem TEXT NOT NULL,
+        isImballato INTEGER NOT NULL DEFAULT 0,
+        idPacklist INTEGER NOT NULL,
+        FOREIGN KEY (idPacklist) REFERENCES packlist (id) ON DELETE CASCADE
+      )
+    ''');
   }
 
   // --- METODI CRUD UNIVERSALI ---
@@ -114,5 +133,12 @@ class DatabaseHelper {
   Future<int> delete(String table, {required String where, required List<dynamic> whereArgs}) async {
     final db = await instance.database;
     return await db.delete(table, where: where, whereArgs: whereArgs);
+  }
+
+  // AGGIORNAMENTO
+  Future<int> update(String table, Map<String, dynamic> row, {required List<int> whereArgs, required String where}) async {
+    final db = await instance.database;
+    int id = row['id']; // Prende l'ID dell'oggetto che gli passiamo
+    return await db.update(table, row, where: 'id = ?', whereArgs: [id]);
   }
 }

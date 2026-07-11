@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import 'package:travel_app_02/controllers/rec_trip_controller.dart';
 import 'package:travel_app_02/controllers/stay_controller.dart';
+import 'package:travel_app_02/controllers/trip_controller.dart';
+import 'package:travel_app_02/controllers/checklist_controller.dart';
+import 'package:travel_app_02/controllers/pack_controller.dart';
 import 'package:travel_app_02/models/expense.dart';
 import 'package:travel_app_02/models/stay.dart';
 import 'package:travel_app_02/models/trip.dart';
@@ -21,13 +25,27 @@ class RecapTrip extends StatefulWidget {
 
 class _RecapTripState extends State<RecapTrip> {
   final StayController _tappaController = StayController();
+  final ChecklistController _checklistController = ChecklistController();
+  final PackController _packController = PackController();
+
   List<Stay> _tappe = [];
   bool _caricamentoTappe = true;
+
+  Map<String, dynamic>? _checklist; // {id, titolo} oppure null se non esiste ancora
+  Map<String, dynamic>? _packlist;
 
   @override
   void initState() {
     super.initState();
-    _caricaTappe();
+    _caricaTutto();
+  }
+
+  Future<void> _caricaTutto() async {
+    await Future.wait([
+      _caricaTappe(),
+      _caricaChecklist(),
+      _caricaPacklist(),
+    ]);
   }
 
   Future<void> _caricaTappe() async {
@@ -36,11 +54,37 @@ class _RecapTripState extends State<RecapTrip> {
       setState(() => _caricamentoTappe = false);
       return;
     }
-    final tappeDb = await _tappaController.caricaTappeViaggio(idViaggio);
-    setState(() {
-      _tappe = tappeDb;
-      _caricamentoTappe = false;
-    });
+    try {
+      final tappeDb = await _tappaController.caricaTappeViaggio(idViaggio);
+      setState(() {
+        _tappe = tappeDb;
+        _caricamentoTappe = false;
+      });
+    } catch (e) {
+      setState(() => _caricamentoTappe = false);
+      _mostraErrore('Errore caricando le tappe: $e');
+    }
+  }
+
+  Future<void> _caricaChecklist() async {
+    final idViaggio = int.tryParse(widget.controller.trip.id);
+    if (idViaggio == null) return;
+    final risultato = await _checklistController.caricaChecklistViaggio(idViaggio);
+    if (mounted) setState(() => _checklist = risultato);
+  }
+
+  Future<void> _caricaPacklist() async {
+    final idViaggio = int.tryParse(widget.controller.trip.id);
+    if (idViaggio == null) return;
+    final risultato = await _packController.caricaPacklistViaggio(idViaggio);
+    if (mounted) setState(() => _packlist = risultato);
+  }
+
+  void _mostraErrore(String messaggio) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(messaggio), backgroundColor: Colors.red),
+    );
   }
 
   String _formatValuta(double importo) {
@@ -79,7 +123,7 @@ class _RecapTripState extends State<RecapTrip> {
               if (valore == 'elimina') {
                 _mostraConfermaEliminazioneViaggio(context);
               } else if (valore == 'modifica') {
-                // TODO: Navigator.pushNamed(context, AppRoutes.addTrip, arguments: trip);
+                _mostraMenuModificaViaggio(context);
               }
             },
             itemBuilder: (context) => const [
@@ -170,11 +214,18 @@ class _RecapTripState extends State<RecapTrip> {
                       final risultato = await Navigator.pushNamed(context, AppRoutes.newStay);
                       if (risultato != null && risultato is Stay) {
                         final idViaggio = int.tryParse(trip.id);
-                        if (idViaggio != null) {
+                        if (idViaggio == null) {
+                          _mostraErrore('ID viaggio non valido, impossibile salvare la tappa.');
+                          return;
+                        }
+                        try {
                           final tappaSalvata = await _tappaController.salvaNuovaTappa(risultato, idViaggio);
                           setState(() => _tappe.add(tappaSalvata));
-                        } else {
-                          setState(() => _tappe.add(risultato));
+                        } catch (e) {
+                          // Se vedi qui un errore "no such column" o "no such table",
+                          // devi disinstallare l'app dall'emulatore (il database salvato
+                          // è vecchio e non ha ancora lo schema aggiornato).
+                          _mostraErrore('Errore salvando la tappa: $e');
                         }
                       }
                     },
@@ -184,14 +235,11 @@ class _RecapTripState extends State<RecapTrip> {
                   const SizedBox(height: 16),
                   const Text("PACKLIST", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
-                  
-                  // PACKLIST CLICKABILE
+
                   InkWell(
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Funzionalità Packlist in arrivo!')),
-                      );
-                    },
+                    // La packlist si sceglie solo in fase di creazione del viaggio:
+                    // qui è consultabile solo se ne è stata scelta una allora.
+                    onTap: _packlist == null ? null : () => _apriPacklist(context, trip),
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -199,7 +247,13 @@ class _RecapTripState extends State<RecapTrip> {
                         border: Border.all(color: Colors.black54),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Text("- Vedi Packlist", style: TextStyle(fontWeight: FontWeight.w500)),
+                      child: Text(
+                        _packlist == null ? "Nessuna packlist selezionata" : "- ${_packlist!['titolo']}",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          color: _packlist == null ? Colors.black45 : Colors.black,
+                        ),
+                      ),
                     ),
                   ),
 
@@ -207,13 +261,8 @@ class _RecapTripState extends State<RecapTrip> {
                   const Text("CHECKLIST", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
 
-                  // CHECKLIST CLICKABILE
                   InkWell(
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Funzionalità Checklist in arrivo!')),
-                      );
-                    },
+                    onTap: () => _apriChecklist(context, trip),
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -221,7 +270,10 @@ class _RecapTripState extends State<RecapTrip> {
                         border: Border.all(color: Colors.black54),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Text("- Vedi Checklist", style: TextStyle(fontWeight: FontWeight.w500)),
+                      child: Text(
+                        _checklist == null ? "+ Crea Checklist" : "- ${_checklist!['titolo']}",
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
                     ),
                   ),
 
@@ -293,33 +345,39 @@ class _RecapTripState extends State<RecapTrip> {
                 children: [
                   const Text("LISTA SPESE:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
-                  ...trip.spese.map(
-                    (spesa) => InkWell(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          AppRoutes.recapCost,
-                          arguments: spesa,
-                        );
-                      },
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                        margin: const EdgeInsets.only(bottom: 6),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.black54),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("- ${spesa.titolo}", style: const TextStyle(fontWeight: FontWeight.w500)),
-                            Text(_formatValuta(spesa.importo), style: const TextStyle(fontWeight: FontWeight.bold)),
-                          ],
+                  if (trip.spese.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Text("Nessuna spesa ancora aggiunta"),
+                    )
+                  else
+                    ...trip.spese.map(
+                      (spesa) => InkWell(
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.recapCost,
+                            arguments: spesa,
+                          );
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                          margin: const EdgeInsets.only(bottom: 6),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black54),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text("- ${spesa.titolo}", style: const TextStyle(fontWeight: FontWeight.w500)),
+                              Text(_formatValuta(spesa.importo), style: const TextStyle(fontWeight: FontWeight.bold)),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -342,6 +400,55 @@ class _RecapTripState extends State<RecapTrip> {
     );
   }
 
+  // ---------- PACKLIST / CHECKLIST ----------
+
+  Future<void> _apriPacklist(BuildContext context, Trip trip) async {
+    final idViaggio = int.tryParse(trip.id);
+    final packlist = _packlist;
+    if (idViaggio == null || packlist == null) return;
+
+    final risultato = await Navigator.pushNamed(
+      context,
+      AppRoutes.recapPacklist,
+      arguments: {'id': packlist['id'], 'titolo': packlist['titolo']},
+    );
+    if (risultato == true) {
+      _caricaPacklist(); // è stata eliminata, ricarichiamo (tornerà a "Nessuna packlist selezionata")
+    }
+  }
+
+  Future<void> _apriChecklist(BuildContext context, Trip trip) async {
+    final idViaggio = int.tryParse(trip.id);
+    if (idViaggio == null) return;
+
+    if (_checklist == null) {
+      final risultato = await Navigator.pushNamed(context, AppRoutes.addCheck);
+      if (risultato != null && risultato is Map) {
+        try {
+          await _checklistController.salvaChecklist(
+            risultato['titolo'] as String,
+            List<Map<String, dynamic>>.from(risultato['elementi'] as List),
+            idViaggio,
+          );
+          await _caricaChecklist();
+        } catch (e) {
+          _mostraErrore('Errore salvando la checklist: $e');
+        }
+      }
+    } else {
+      final risultato = await Navigator.pushNamed(
+        context,
+        AppRoutes.recapChecklist,
+        arguments: {'id': _checklist!['id'], 'titolo': _checklist!['titolo']},
+      );
+      if (risultato == true) {
+        _caricaChecklist();
+      }
+    }
+  }
+
+  // ---------- ELIMINA / MODIFICA VIAGGIO ----------
+
   void _mostraConfermaEliminazioneViaggio(BuildContext context) {
     final trip = widget.controller.trip;
     showDialog(
@@ -351,9 +458,17 @@ class _RecapTripState extends State<RecapTrip> {
         content: Text('Sei sicuro di voler eliminare il viaggio "${trip.titolo}"?'),
         actions: [
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(dialogContext);
-              Navigator.pop(context);
+              try {
+                await TripController().eliminaViaggio(trip.id);
+              } catch (e) {
+                _mostraErrore('Errore eliminando il viaggio: $e');
+                return;
+              }
+              if (context.mounted) {
+                Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (route) => false);
+              }
             },
             child: const Text('SÌ'),
           ),
@@ -364,5 +479,72 @@ class _RecapTripState extends State<RecapTrip> {
         ],
       ),
     );
+  }
+
+  // Menu a tendina: quale campo del viaggio vuoi modificare
+  void _mostraMenuModificaViaggio(BuildContext context) {
+    final trip = widget.controller.trip;
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('Titolo'),
+              onTap: () => _apriModificaCampo(context, trip, 'titolo', 'Titolo'),
+            ),
+            ListTile(
+              title: const Text('Luogo'),
+              onTap: () => _apriModificaCampo(context, trip, 'luogo', 'Luogo'),
+            ),
+            ListTile(
+              title: const Text('Data Inizio'),
+              onTap: () => _apriModificaCampo(context, trip, 'dataInizio', 'Data Inizio'),
+            ),
+            ListTile(
+              title: const Text('Data Fine'),
+              onTap: () => _apriModificaCampo(context, trip, 'dataFine', 'Data Fine'),
+            ),
+            ListTile(
+              title: const Text('Budget Previsto'),
+              onTap: () => _apriModificaCampo(context, trip, 'budgetPrevisto', 'Budget Previsto'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _apriModificaCampo(BuildContext context, Trip trip, String campo, String label) async {
+    Navigator.pop(context); // chiude il menu a tendina
+
+    final risultato = await Navigator.pushNamed(
+      context,
+      AppRoutes.editTripField,
+      arguments: {'trip': trip, 'campo': campo, 'label': label},
+    );
+
+    if (risultato != null && risultato is Map) {
+      setState(() {
+        switch (risultato['campo']) {
+          case 'titolo':
+            trip.titolo = risultato['valore'];
+            break;
+          case 'luogo':
+            trip.luogo = risultato['valore'];
+            break;
+          case 'dataInizio':
+            trip.dataInizio = risultato['valore'];
+            break;
+          case 'dataFine':
+            trip.dataFine = risultato['valore'];
+            break;
+          case 'budgetPrevisto':
+            trip.budgetPrevisto = risultato['valore'];
+            break;
+        }
+      });
+    }
   }
 }

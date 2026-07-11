@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:travel_app_02/route.dart';
-import 'package:travel_app_02/services/database_helper.dart';
 import 'package:travel_app_02/sessione.dart';
 import 'package:travel_app_02/controllers/auth_controller.dart';
 
@@ -41,13 +40,6 @@ class _LoginState extends State<Login> {
         borderSide: BorderSide.none,
       ),
     );
-  }
-
-  bool _verificaCredenzialiDatabase(String username, String password) {
-    if (username == 'admin' && password == '1234') {
-      return true;
-    }
-    return false;
   }
 
   void _eseguiLogin() async {
@@ -105,8 +97,10 @@ class _LoginState extends State<Login> {
               child: IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
                 onPressed: () {
-                  Navigator.pop(context); // Torna indietro alla schermata precedente (start)
-                },
+  // Forza il Navigator ad andare alla rotta definita come start
+  // e rimuovi tutto ciò che c'è dietro (false)
+  Navigator.pushNamedAndRemoveUntil(context, AppRoutes.start, (route) => false);
+},
               ),
             ),
             
