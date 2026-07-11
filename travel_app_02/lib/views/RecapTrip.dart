@@ -240,7 +240,7 @@ class _RecapTripState extends State<RecapTrip> {
 
             ElevatedButton(
               onPressed: () async {
-                final nuovaSpesa = await Navigator.pushNamed(context, AppRoutes.newCost);
+                final nuovaSpesa = await Navigator.pushNamed(context, AppRoutes.newCost, arguments: _controller!.trip);
                 if (nuovaSpesa != null && nuovaSpesa is Expense) {
                   setState(() {
                     _controller!.aggiungiSpesa(nuovaSpesa);

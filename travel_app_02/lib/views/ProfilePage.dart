@@ -25,6 +25,7 @@ class ProfilePage extends StatelessWidget {
         backgroundColor: Colors.amber,
         elevation: 0,
         centerTitle: true,
+        automaticallyImplyLeading: false,
         title: const Text(
           'IL TUO PROFILO',
           style: TextStyle(

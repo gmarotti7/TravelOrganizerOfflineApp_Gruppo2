@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:travel_app_02/models/expense.dart';
+import 'package:travel_app_02/models/trip.dart';
 import 'BottomBar.dart';
 
 class NewCost extends StatefulWidget {
@@ -15,11 +16,12 @@ class _NewCostState extends State<NewCost> {
   final _titoloController = TextEditingController();
   final _costoController = TextEditingController();
   final _dataController = TextEditingController();
+  final _oraController = TextEditingController();
   final _descrizioneController = TextEditingController();
   String? _categoriaSelezionata;
   final _viaggioAssociatoController = TextEditingController();
   final _attivitaAssociataController = TextEditingController();
-  // Variabili per i menu a tendina
+  Trip? _viaggioSelezionato;
   String? _statoSelezionato;
   String? _metodoPagamento;
   String _valutaSelezionata = 'EUR';
@@ -31,9 +33,9 @@ class _NewCostState extends State<NewCost> {
   Future<void> _selezionaData(BuildContext context) async {
     final DateTime? dataSelezionata = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(), // Data di partenza
-      firstDate: DateTime(2000),   // Data minima
-      lastDate: DateTime(2100),    // Data massima
+      initialDate: _viaggioSelezionato?.dataInizio ?? DateTime.now(), // Data di partenza
+      firstDate: _viaggioSelezionato?.dataInizio ?? DateTime(2000),   // Data minima
+      lastDate: _viaggioSelezionato?.dataFine ?? DateTime(2100),    // Data massima
       // Personalizziamo i colori per farli abbinare al tuo tema Giallo/Nero!
       builder: (context, child) {
         return Theme(
@@ -101,6 +103,10 @@ class _NewCostState extends State<NewCost> {
 
   }
 
+  Future<void> _selezionaOra(BuildContext context) async {
+    final TimeOfDay? ora = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+    if (ora != null) setState(() => _oraController.text = "${ora.hour.toString().padLeft(2, '0')}:${ora.minute.toString().padLeft(2, '0')}");
+  }
   // --- LOGICA CONTROLLO ORA ---
   void _validaOra(String valore) {
     if (valore.isEmpty) {
@@ -124,6 +130,19 @@ class _NewCostState extends State<NewCost> {
     }
 
     setState(() => _erroreOra = null);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Riceviamo il viaggio come argomento
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Trip) {
+      setState(() {
+        _viaggioSelezionato = args;
+        _viaggioAssociatoController.text = args.titolo; // Imposta il nome del viaggio
+      });
+    }
   }
 
   @override
@@ -222,8 +241,11 @@ class _NewCostState extends State<NewCost> {
               const SizedBox(height: 20),
 
               // 3. ORA (HH:MM)
+              const Text('ORA', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
               TextField(
-                onChanged: _validaOra,
+                controller: _oraController, // Assicurati di dichiarare questo controller
+                readOnly: true,
+                onTap: () => _selezionaOra(context),
                 decoration: InputDecoration(
                   hintText: 'HH:MM',
                   errorText: _erroreOra,
