@@ -21,4 +21,28 @@ class Viaggio {
     this.tappe = const [],
     this.spese = const [],
   });
+
+  // Da Oggetto a riga SQLite
+  Map<String, dynamic> toMap(int idUtente) {
+    return {
+      'titolo': titolo,
+      'luogo': luogo,
+      'dataInizio': dataInizio.toIso8601String(),
+      'dataFine': dataFine.toIso8601String(),
+      'budgetPrevisto': budgetPrevisto,
+      'idUtente': idUtente,
+    };
+  }
+
+  // Da riga SQLite a Oggetto
+  factory Viaggio.fromMap(Map<String, dynamic> map) {
+    return Viaggio(
+      id: map['id'].toString(),
+      titolo: map['titolo'],
+      luogo: map['luogo'],
+      dataInizio: DateTime.parse(map['dataInizio']),
+      dataFine: DateTime.parse(map['dataFine']),
+      budgetPrevisto: map['budgetPrevisto'],
+    );
+  }
 }

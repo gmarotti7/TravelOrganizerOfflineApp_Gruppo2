@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:travel_app_02/models/spesa.dart';
 import 'BottomBar.dart';
 
 class RecapCost extends StatelessWidget {
@@ -34,6 +35,7 @@ class RecapCost extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final spesaPassata = ModalRoute.of(context)!.settings.arguments as Spesa;
     return Scaffold(
       backgroundColor: Colors.amber, 
 
@@ -47,6 +49,7 @@ class RecapCost extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: Colors.black, size: 30),
           onPressed: () {
             // Logica per tornare indietro
+            Navigator.pop(context);
           },
         ),
         
@@ -81,16 +84,15 @@ class RecapCost extends StatelessWidget {
             children: [
               // La riga con la freccia e il menu è stata spostata nell'AppBar!
               // Iniziamo direttamente con i dati:
-
-              _buildRecapItem('TITOLO', 'Cena ristorante'),
-              _buildRecapItem('IMPORTO', '50.00 EUR'),
-              _buildRecapItem('CATEGORIA', 'Cibo e Bevande'),
-              _buildRecapItem('STATO', 'Pagata'),
-              _buildRecapItem('DATA', '09/07/2026'),
-              _buildRecapItem('VIAGGIO ASSOCIATO', 'Vacanza a Roma'),
-              _buildRecapItem('ATTIVITÀ ASSOCIATA', 'Tour serale'),
-              _buildRecapItem('METODO DI PAGAMENTO', 'Carta di credito'),
-              
+              _buildRecapItem('TITOLO', spesaPassata.titolo),
+              _buildRecapItem('IMPORTO', '${spesaPassata.importo.toStringAsFixed(2)} EUR'),
+              _buildRecapItem('STATO', spesaPassata.stato ?? 'Non specificato'),
+              _buildRecapItem('DATA', spesaPassata.data ?? 'Non specificata'),
+              _buildRecapItem('METODO DI PAGAMENTO', spesaPassata.metodoPagamento ?? 'Non specificato'),
+              _buildRecapItem('CATEGORIA', spesaPassata.categoria ?? 'Non Specificato'),
+              _buildRecapItem('VIAGGIO ASSOCIATO', spesaPassata.viaggioAssociato ?? 'Non specificato'),
+              _buildRecapItem('ATTIVITÀ ASSOCIATA', spesaPassata.attivitaAssociata ?? 'Non specificata'),
+ 
               const SizedBox(height: 10),
               const Text(
                 'NOTE:',

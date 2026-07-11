@@ -5,6 +5,8 @@ import 'BottomBar.dart';
 import 'add_trip.dart'; // AGGIUNTO: Import della pagina per creare il viaggio
 import 'package:travel_app_02/models/viaggio.dart'; // AGGIUNTO: Import del modello del tuo collega
 import 'package:travel_app_02/views/Add_trip.dart';
+import 'package:travel_app_02/sessione.dart';
+import 'package:travel_app_02/controllers/viaggioController.dart';
 
 class HomePage extends StatefulWidget{
   const HomePage({super.key});
@@ -31,10 +33,22 @@ class _HomePageState extends State<HomePage> {
   // Lista che contiene i viaggi filtrati da mostrare sulla UI
   List<Viaggio> _viaggiFiltrati = [];
 
+  final ViaggioController _controller = ViaggioController();
   @override
   void initState() {
     super.initState();
-    _viaggiFiltrati = _tuttiIViaggi; // All'inizio mostra tutti i viaggi
+    _caricaDatiDalDatabase();
+  }
+
+  Future<void> _caricaDatiDalDatabase() async {
+    if (Sessione.idUtenteAttuale != null) {
+      final viaggiDb = await _controller.caricaViaggiUtente(Sessione.idUtenteAttuale!);
+      setState(() {
+        _tuttiIViaggi.clear();
+        _tuttiIViaggi.addAll(viaggiDb);
+        _viaggiFiltrati = List.from(_tuttiIViaggi);
+      });
+    }
   }
 
   @override
@@ -220,6 +234,7 @@ class _HomePageState extends State<HomePage> {
                             child: InkWell(
                               onTap: () {
                                 debugPrint("Cliccato sul viaggio: ${viaggio.titolo}");
+                                Navigator.pushNamed(context, AppRoutes.riepilogoViaggio, arguments: viaggio); //Appena modificat
                               },
                               borderRadius: BorderRadius.circular(5),
                               child: Ink(
@@ -276,20 +291,35 @@ class _HomePageState extends State<HomePage> {
         final risultato = await Navigator.pushNamed(context, AppRoutes.addTrip);
 
         if (risultato != null && risultato is Map<String, dynamic>) {
-          setState(() {
-            _tuttiIViaggi.add(
-              // CORRETTO: Inserimento dinamico con i nuovi parametri del modello
-              Viaggio(
-                titolo: risultato['titolo'],
-                luogo: risultato['luogo'],
-                dataInizio: risultato['data'],
-                dataFine: risultato['data'], // Per ora mettiamo la stessa data
-                id: DateTime.now().millisecondsSinceEpoch.toString(), // ID univoco fittizio
-                budgetPrevisto: 0.0, // Budget di default in attesa del collegamento
-              ),
-            );
-            _applicaFiltri();
-          });
+          int idUtenteSicuro = Sessione.idUtenteAttuale ?? 1;
+
+          Viaggio nuovo = Viaggio(
+            titolo: risultato['titolo'],
+            luogo: risultato['luogo'],
+            dataInizio: risultato['dataInizio'],
+            dataFine: risultato['dataFine'], 
+            id: '0', 
+            budgetPrevisto: risultato['budgetPrevisto'],
+          );
+          
+          try {
+            Viaggio salvato = await _controller.salvaNuovoViaggio(nuovo, idUtenteSicuro);
+            
+            setState(() {
+              _tuttiIViaggi.add(salvato);
+              _applicaFiltri();
+            });
+          } catch (e) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Errore di salvataggio. Hai fatto il login correttamente? ($e)'),
+                  backgroundColor: Colors.red,
+                  duration: const Duration(seconds: 4),
+                ),
+              );
+            }
+          }
         }
       },
       child: Container(

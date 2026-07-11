@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:travel_app_02/views/Add_trip.dart';
 import 'package:travel_app_02/views/CurrencyConverter.dart';
 import 'package:travel_app_02/views/Home_page.dart';
+import 'package:travel_app_02/views/NewCost.dart';
 import 'package:travel_app_02/views/ProfilePage.dart';
+import 'package:travel_app_02/views/RecapCost.dart';
+import 'package:travel_app_02/views/StatsPage.dart';
 import 'package:travel_app_02/views/start.dart'; 
 import 'package:travel_app_02/views/login.dart';   // Sbloccato import login
 import 'package:travel_app_02/views/sign_up.dart'; // Sbloccato import registrazione
@@ -21,7 +24,6 @@ class AppRoutes {
   static const String profile = '/profile';
   static const String riepilogoViaggio = '/riepilogo_viaggio';
   static const String addTrip = '/add_trip';
-  static const String addCheck = '/add_check';
 
 
 
@@ -41,7 +43,6 @@ class AppRoutes {
         );
       },
       addTrip: (context) => const AddTrip(),
-      addCheck:(context) => const AddCheck(),
     };
   }
 }

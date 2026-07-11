@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'BottomBar.dart';
+import 'package:travel_app_02/route.dart';
 
 class ProfilePage extends StatelessWidget {
-  const ProfilePage({Key? key}) : super(key: key);
+  const ProfilePage ({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -74,6 +75,7 @@ class ProfilePage extends StatelessWidget {
             _buildMenuButton(
               testo: 'MODIFICA',
               onPressed: () {
+                Navigator.pushNamed(context, AppRoutes.register);
                 // TODO: Collegare il metodo del Controller per andare alla schermata di modifica
               },
             ),
@@ -85,6 +87,7 @@ class ProfilePage extends StatelessWidget {
               testo: 'STATISTICHE',
               onPressed: () {
                 // TODO: Collegare il metodo del Controller per andare alle statistiche
+                Navigator.pushNamed(context, AppRoutes.statsPage);
               },
             ),
             
@@ -95,7 +98,32 @@ class ProfilePage extends StatelessWidget {
               testo: 'LOGOUT',
               icona: Icons.power_settings_new, // L'icona di accensione/spegnimento
               onPressed: () {
+                Navigator.pushNamed(context, AppRoutes.start);
                 // TODO: Collegare il metodo del Controller per effettuare il logout
+              },
+            ),
+
+            const SizedBox(height: 25),
+
+            // 5. BOTTONE ELIMINA ACCOUNT
+            _buildMenuButton(
+              testo: 'ELIMINA ACCOUNT',
+              icona: Icons.delete_forever,
+              onPressed: () async {
+                // TODO: Chiamare _profileController.eliminaAccount(idUtente);
+                
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Account eliminato', style: TextStyle(fontWeight: FontWeight.bold)),
+                      backgroundColor: Colors.black,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                  
+                  // Rimuove la cronologia di navigazione e torna alla pagina di Start
+                  Navigator.pushNamedAndRemoveUntil(context, AppRoutes.start, (route) => false);
+                }
               },
             ),
           ],
