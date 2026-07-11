@@ -1,18 +1,18 @@
-class stato {
+class State {
   final String id;
   final String title;
   final DateTime startDate;
   final DateTime endDate;
 
-  stato({
+  State({
     required this.id,
     required this.title,
     required this.startDate,
     required this.endDate,
   });
 
-  factory stato.fromMap(Map<String, dynamic> map){
-    return stato(
+  factory State.fromMap(Map<String, dynamic> map){
+    return State(
       id: map['id'] as String,
       title: map['title'] as String,
       startDate: DateTime.parse(map['start_date'] as String),

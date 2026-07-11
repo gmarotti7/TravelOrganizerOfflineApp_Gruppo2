@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'Add_check.dart'; // Assicurati che il nome del file sia corretto!
+import 'package:intl/intl.dart';
+import 'package:travel_app_02/controllers/trip_Controller.dart';
+import 'package:intl/intl.dart';
+import 'package:travel_app_02/models/trip.dart';
 
 class AddTrip extends StatefulWidget {
   const AddTrip({super.key});
@@ -14,6 +18,7 @@ class _AddTripState extends State<AddTrip> {
   final _destinazioneController = TextEditingController();
   final _budgetController = TextEditingController();
   final _noteController = TextEditingController();
+  final TripController _viaggioController = TripController();
 
   // Gestione Date
   DateTime? _dataPartenza;
@@ -266,15 +271,28 @@ class _AddTripState extends State<AddTrip> {
               _buildButtonNero(
                 testo: 'CONFERMA',
                 onPressed: () {
-                  if (_titoloController.text.isNotEmpty && _destinazioneController.text.isNotEmpty) {
+                  // Aggiunto controllo sulle date per sicurezza
+                  if (_titoloController.text.isNotEmpty && 
+                      _destinazioneController.text.isNotEmpty &&
+                      _dataPartenza != null &&
+                      _dataRitorno != null) {
+                    
                     final nuovoViaggioDati = {
                       'titolo': _titoloController.text,
                       'luogo': _destinazioneController.text,
-                      'data': _dataPartenza ?? DateTime.now(),
+                      'dataInizio': _dataPartenza, // Nome corretto per la Home
+                      'dataFine': _dataRitorno,    // Aggiunto
+                      'budgetPrevisto': double.tryParse(_budgetController.text.replaceAll(',', '.')) ?? 0.0, // Aggiunto
                     };
                     Navigator.pop(context, nuovoViaggioDati);
                   } else {
-                    Navigator.pop(context);
+                    // Mostra un avviso se mancano dati
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Compila titolo, destinazione e scegli le date!'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
                   }
                 },
               ),

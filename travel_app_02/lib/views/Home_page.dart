@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:travel_app_02/route.dart';
 import 'BottomBar.dart';
 import 'add_trip.dart'; // AGGIUNTO: Import della pagina per creare il viaggio
-import 'package:travel_app_02/models/viaggio.dart'; // AGGIUNTO: Import del modello del tuo collega
+import 'package:travel_app_02/models/trip.dart'; // AGGIUNTO: Import del modello del tuo collega
 import 'package:travel_app_02/views/Add_trip.dart';
 import 'package:travel_app_02/sessione.dart';
-import 'package:travel_app_02/controllers/viaggioController.dart';
+import 'package:travel_app_02/controllers/trip_controller.dart';
 
 class HomePage extends StatefulWidget{
   const HomePage({super.key});
@@ -23,17 +23,17 @@ class _HomePageState extends State<HomePage> {
   DateTime? _selectedDate;
 
   // Lista simulata di viaggi (Database temporaneo)
-  final List<Viaggio> _tuttiIViaggi = [
-    Viaggio(titolo: 'Vacanze Estive', luogo: 'Barcellona', dataInizio: DateTime(2026, 08, 15), id: '0001', dataFine: DateTime(2026, 08, 22), budgetPrevisto: 500),
-    Viaggio(titolo: 'Capodanno a Londra', luogo: 'Londra', dataInizio: DateTime(2027, 01, 01), id: '002', dataFine: DateTime(2027, 01, 08), budgetPrevisto: 700),
-    Viaggio(titolo: 'Laurea Amo', luogo: 'Salerno', dataInizio: DateTime(2026, 03, 10), id: '0003', dataFine: DateTime(2026, 03, 18), budgetPrevisto: 400),
-    Viaggio(titolo: 'Weekend Romantico', luogo: 'Parigi', dataInizio: DateTime(2025, 12, 25), id: '0004', dataFine: DateTime(2025, 12, 29), budgetPrevisto: 500),
+  final List<Trip> _tuttiIViaggi = [
+    Trip(titolo: 'Vacanze Estive', luogo: 'Barcellona', dataInizio: DateTime(2026, 08, 15), id: '0001', dataFine: DateTime(2026, 08, 22), budgetPrevisto: 500),
+    Trip(titolo: 'Capodanno a Londra', luogo: 'Londra', dataInizio: DateTime(2027, 01, 01), id: '002', dataFine: DateTime(2027, 01, 08), budgetPrevisto: 700),
+    Trip(titolo: 'Laurea Amo', luogo: 'Salerno', dataInizio: DateTime(2026, 03, 10), id: '0003', dataFine: DateTime(2026, 03, 18), budgetPrevisto: 400),
+    Trip(titolo: 'Weekend Romantico', luogo: 'Parigi', dataInizio: DateTime(2025, 12, 25), id: '0004', dataFine: DateTime(2025, 12, 29), budgetPrevisto: 500),
   ];
 
   // Lista che contiene i viaggi filtrati da mostrare sulla UI
-  List<Viaggio> _viaggiFiltrati = [];
+  List<Trip> _viaggiFiltrati = [];
 
-  final ViaggioController _controller = ViaggioController();
+  final TripController _controller = TripController();
   @override
   void initState() {
     super.initState();
@@ -294,36 +294,35 @@ class _HomePageState extends State<HomePage> {
         
         int idUtenteSicuro = Sessione.idUtenteAttuale ?? 1;
 
-        Viaggio nuovo = Viaggio(
-          titolo: risultato['titolo'],
-          luogo: risultato['luogo'],
-          dataInizio: risultato['dataInizio'],
-          dataFine: risultato['dataFine'], 
-          id: '0', 
-          budgetPrevisto: risultato['budgetPrevisto'],
-        );
-        
-        try {
+          Trip nuovo = Trip(
+            titolo: risultato['titolo'],
+            luogo: risultato['luogo'],
+            dataInizio: risultato['dataInizio'],
+            dataFine: risultato['dataFine'], 
+            id: '0', 
+            budgetPrevisto: risultato['budgetPrevisto'],
+          );
           
-          Viaggio salvato = await _controller.salvaNuovoViaggio(nuovo, idUtenteSicuro);
-          
-          setState(() {
-            _tuttiIViaggi.add(salvato);
-            _applicaFiltri(); 
-          });
-        } catch (e) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Errore DB: $e'),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 4),
-              ),
-            );
+          try {
+            Trip salvato = await _controller.salvaNuovoViaggio(nuovo, idUtenteSicuro);
+            
+            setState(() {
+              _tuttiIViaggi.add(salvato);
+              _applicaFiltri();
+            });
+          } catch (e) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Errore di salvataggio. Hai fatto il login correttamente? ($e)'),
+                  backgroundColor: Colors.red,
+                  duration: const Duration(seconds: 4),
+                ),
+              );
+            }
           }
         }
-      }
-    },
+      },
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 18),
