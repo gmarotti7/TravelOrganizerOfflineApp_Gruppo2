@@ -1,5 +1,5 @@
-// lib/views/add_trip.dart
 import 'package:flutter/material.dart';
+import 'Add_check.dart'; // Assicurati che il nome del file sia corretto!
 
 class AddTrip extends StatefulWidget {
   const AddTrip({super.key});
@@ -14,7 +14,6 @@ class _AddTripState extends State<AddTrip> {
   final _destinazioneController = TextEditingController();
   final _budgetController = TextEditingController();
   final _noteController = TextEditingController();
-  final ViaggioController _viaggioController = ViaggioController();
 
   // Gestione Date
   DateTime? _dataPartenza;
@@ -215,7 +214,6 @@ class _AddTripState extends State<AddTrip> {
 
               const SizedBox(height: 25),
 
-              // 6. BUDGET PREVISTO
               Row(
                 children: [
                   const Text('BUDGET PREVISTO: ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
@@ -226,13 +224,6 @@ class _AddTripState extends State<AddTrip> {
                       child: TextField(
                         controller: _budgetController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        
-                        // INIZIO PARTE NUOVA: Filtra fisicamente i caratteri digitati
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'^\d*[\.,]?\d{0,2}')),
-                        ],
-                        // FINE PARTE NUOVA
-                        
                         style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
                         decoration: InputDecoration(
                           fillColor: Colors.white,
@@ -275,50 +266,15 @@ class _AddTripState extends State<AddTrip> {
               _buildButtonNero(
                 testo: 'CONFERMA',
                 onPressed: () {
-                  FocusScope.of(context).unfocus();
-
-                  if (_titoloController.text.isNotEmpty && 
-                      _destinazioneController.text.isNotEmpty && 
-                      _dataPartenza != null && 
-                      _dataRitorno != null) {
-                    
-                    final DateFormat format = DateFormat('dd/MM/yyyy');
-                    String dataPartenzaStr = format.format(_dataPartenza!);
-                    String dataRitornoStr = format.format(_dataRitorno!);
-
-                    List<Viaggio> listaViaggiAttuali = []; 
-                    
-                    bool isValido = _viaggioController.validaNuovoViaggio(
-                      _titoloController.text, 
-                      dataPartenzaStr, 
-                      dataRitornoStr, 
-                      listaViaggiAttuali
-                    );
-
-                    if (isValido) {
-                      final Map<String, dynamic> nuovoViaggioDati = {
-                        'titolo': _titoloController.text,
-                        'luogo': _destinazioneController.text,
-                        'dataInizio': _dataPartenza, 
-                        'dataFine': _dataRitorno,
-                        'budgetPrevisto': double.tryParse(_budgetController.text.replaceAll(',', '.')) ?? 0.0,
-                      };
-                      Navigator.pop(context, nuovoViaggioDati);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Errore: Nome duplicato o Date sovrapposte!'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
+                  if (_titoloController.text.isNotEmpty && _destinazioneController.text.isNotEmpty) {
+                    final nuovoViaggioDati = {
+                      'titolo': _titoloController.text,
+                      'luogo': _destinazioneController.text,
+                      'data': _dataPartenza ?? DateTime.now(),
+                    };
+                    Navigator.pop(context, nuovoViaggioDati);
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Compila tutti i campi! (Hai selezionato le date?)'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
+                    Navigator.pop(context);
                   }
                 },
               ),
