@@ -105,7 +105,8 @@ class _RecapTripState extends State<RecapTrip> {
               style: const TextStyle(
                 color: Colors.black,
                 fontStyle: FontStyle.italic,
-                fontSize: 16,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 20),
@@ -177,10 +178,7 @@ class _RecapTripState extends State<RecapTrip> {
                   ),
 
                   const SizedBox(height: 16),
-                  const Text(
-                    "PACKLIST",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
+                  const Text("PACKLIST", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
                   Container(
                     width: double.infinity,
@@ -193,10 +191,7 @@ class _RecapTripState extends State<RecapTrip> {
                   ),
 
                   const SizedBox(height: 16),
-                  const Text(
-                    "CHECKLIST",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
+                  const Text("CHECKLIST", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
                   Container(
                     width: double.infinity,
@@ -274,10 +269,7 @@ class _RecapTripState extends State<RecapTrip> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "LISTA SPESE:",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
+                  const Text("LISTA SPESE:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
                   ...trip.spese.map(
                     (spesa) => InkWell(
@@ -299,14 +291,8 @@ class _RecapTripState extends State<RecapTrip> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              "- ${spesa.titolo}",
-                              style: const TextStyle(fontWeight: FontWeight.w500),
-                            ),
-                            Text(
-                              _formatValuta(spesa.importo),
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
+                            Text("- ${spesa.titolo}", style: const TextStyle(fontWeight: FontWeight.w500)),
+                            Text(_formatValuta(spesa.importo), style: const TextStyle(fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),

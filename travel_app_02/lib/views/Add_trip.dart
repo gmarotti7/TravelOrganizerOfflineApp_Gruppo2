@@ -271,45 +271,28 @@ class _AddTripState extends State<AddTrip> {
               _buildButtonNero(
                 testo: 'CONFERMA',
                 onPressed: () {
-                  FocusScope.of(context).unfocus();
-
+                  // Aggiunto controllo sulle date per sicurezza
                   if (_titoloController.text.isNotEmpty && 
-                      _destinazioneController.text.isNotEmpty && 
-                      _dataPartenza != null && 
+                      _destinazioneController.text.isNotEmpty &&
+                      _dataPartenza != null &&
                       _dataRitorno != null) {
                     
-                    final DateFormat format = DateFormat('dd/MM/yyyy');
-                    String dataPartenzaStr = format.format(_dataPartenza!);
-                    String dataRitornoStr = format.format(_dataRitorno!);
-
-                    List<Trip> listaViaggiAttuali = []; 
-                    
-                    bool isValido = _viaggioController.validaNuovoViaggio(
-                      _titoloController.text, 
-                      dataPartenzaStr, 
-                      dataRitornoStr, 
-                      listaViaggiAttuali
-                    );
-
-                    if (isValido) {
-                      final Map<String, dynamic> nuovoViaggioDati = {
-                        'titolo': _titoloController.text,
-                        'luogo': _destinazioneController.text,
-                        'dataInizio': _dataPartenza, 
-                        'dataFine': _dataRitorno,
-                        'budgetPrevisto': double.tryParse(_budgetController.text.replaceAll(',', '.')) ?? 0.0,
-                      };
-                      Navigator.pop(context, nuovoViaggioDati);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Errore: Nome duplicato o Date sovrapposte!'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
+                    final nuovoViaggioDati = {
+                      'titolo': _titoloController.text,
+                      'luogo': _destinazioneController.text,
+                      'dataInizio': _dataPartenza, // Nome corretto per la Home
+                      'dataFine': _dataRitorno,    // Aggiunto
+                      'budgetPrevisto': double.tryParse(_budgetController.text.replaceAll(',', '.')) ?? 0.0, // Aggiunto
+                    };
+                    Navigator.pop(context, nuovoViaggioDati);
                   } else {
-                    Navigator.pop(context);
+                    // Mostra un avviso se mancano dati
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Compila titolo, destinazione e scegli le date!'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
                   }
                 },
               ),
