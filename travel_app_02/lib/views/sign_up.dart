@@ -7,6 +7,7 @@ import 'package:travel_app_02/route.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
+
 class SignUp extends StatefulWidget {
   const SignUp({super.key});
 
@@ -138,19 +139,7 @@ class _SignUp extends State<SignUp> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Freccia bianca in alto a sinistra per tornare indietro
-            Positioned(
-              top: 10,
-              left: 10,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
-                onPressed: () {
-                  Navigator.pop(context); // Torna indietro alla schermata start
-                },
-              ),
-            ),
-
-            // Contenuto centrale del modulo
+            // Contenuto centrale del modulo (SPOSTATO PER PRIMO)
             Center(
               child: SingleChildScrollView(
                 child: Padding(
@@ -385,6 +374,18 @@ class _SignUp extends State<SignUp> {
                     ],
                   ),
                 ),
+              ),
+            ),
+
+            // Freccia in alto a sinistra (SPOSTATA PER ULTIMA, COSÌ STA SOPRA)
+            Positioned(
+              top: 10,
+              left: 10,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
               ),
             ),
           ],
