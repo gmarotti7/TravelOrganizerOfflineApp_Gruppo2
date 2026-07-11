@@ -1,7 +1,10 @@
 // lib/views/login.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:travel_app_02/route.dart'; // Import per accedere ad AppRoutes
+import 'package:travel_app_02/route.dart';
+import 'package:travel_app_02/services/database_helper.dart';
+import 'package:travel_app_02/sessione.dart';
+import 'package:travel_app_02/controllers/auth_controller.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -40,7 +43,6 @@ class _LoginState extends State<Login> {
     );
   }
 
-  // Simulazione della verifica offline
   bool _verificaCredenzialiDatabase(String username, String password) {
     if (username == 'admin' && password == '1234') {
       return true;
@@ -48,7 +50,10 @@ class _LoginState extends State<Login> {
     return false;
   }
 
-  void _eseguiLogin() {
+  void _eseguiLogin() async {
+    // 1. Chiude la tastiera immediatamente
+    FocusScope.of(context).unfocus();
+
     String usernameInput = _usernameController.text.trim();
     String passwordInput = _passwordController.text;
 
@@ -59,20 +64,30 @@ class _LoginState extends State<Login> {
       return;
     }
 
-    bool isValido = _verificaCredenzialiDatabase(usernameInput, passwordInput);
+    try {
+      AuthController auth = AuthController();
+      final utenteLoggato = await auth.eseguiLogin(usernameInput, passwordInput);
 
-    if (isValido) {
+      if (utenteLoggato != null) {
+        setState(() {
+          _errorMessage = null;
+        });
+        
+        Sessione.idUtenteAttuale = utenteLoggato.id;
+        
+        if (context.mounted) {
+          Navigator.pushReplacementNamed(context, AppRoutes.home);
+        }
+      } else {
+        setState(() {
+          _errorMessage = "Username o password non corretto, riprova";
+        });
+      }
+    } catch (e) {
       setState(() {
-        _errorMessage = null;
+        _errorMessage = "Errore di sistema del Database:\n$e";
       });
-      debugPrint("Login effettuato con successo! Navigazione...");
-      
-      // CORRETTO: Cambiato in AppRoutes.start come definito nel tuo main.dart
-      Navigator.pushReplacementNamed(context, AppRoutes.start);
-    } else {
-      setState(() {
-        _errorMessage = "username o password non corretto, riprova";
-      });
+      debugPrint("Errore Login: $e");
     }
   }
 
@@ -161,7 +176,8 @@ class _LoginState extends State<Login> {
                       // Pulsante ACCEDI
                       ElevatedButton(
                         onPressed: () {
-                          Navigator.pushReplacementNamed(context, AppRoutes.home);
+                          FocusScope.of(context).unfocus();
+                          _eseguiLogin();
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.black,

@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 import 'package:travel_app_02/models/viaggio.dart';
+import 'package:travel_app_02/services/database_helper.dart';
 
 class ViaggioController {
   
@@ -50,6 +51,26 @@ class ViaggioController {
                   dataSpesa.isBefore(viaggio.dataFine.add(const Duration(days: 1)));
 
     return isValida;
+  }
+
+
+  // Salva il viaggio nel DB
+  Future<Viaggio> salvaNuovoViaggio(Viaggio viaggio, int idUtente) async {
+    final db = await DatabaseHelper.instance.database;
+    final id = await db.insert('viaggi', viaggio.toMap(idUtente));
+    viaggio.id = id.toString();
+    return viaggio;
+  }
+
+  // Carica i viaggi dell'utente dal DB
+  Future<List<Viaggio>> caricaViaggiUtente(int idUtente) async {
+    final db = await DatabaseHelper.instance.database;
+    final List<Map<String, dynamic>> mappe = await db.query(
+      'viaggi',
+      where: 'idUtente = ?',
+      whereArgs: [idUtente],
+    );
+    return mappe.map((mappa) => Viaggio.fromMap(mappa)).toList();
   }
   
 }

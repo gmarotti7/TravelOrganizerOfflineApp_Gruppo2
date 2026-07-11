@@ -1,6 +1,8 @@
 // lib/views/sign_up.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:travel_app_02/controllers/auth_controller.dart';
+import 'package:travel_app_02/models/utente.dart';
 import 'package:travel_app_02/route.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -311,12 +313,56 @@ class _SignUp extends State<SignUp> {
 
                       // Pulsante CONFERMA
                       ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
+                          FocusScope.of(context).unfocus();
+
+                          if (_usernameController.text.isEmpty || 
+                              _emailController.text.isEmpty || 
+                              _ageController.text.isEmpty || 
+                              _passwordController.text.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Errore: Compila tutti i campi!'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            return;
+                          }
+
                           if (_validaCampi()) {
                             debugPrint("Dati validi! Pronto al salvataggio.");
+                            Utente nuovoUtente = Utente(
+                              username: _usernameController.text,
+                              password: _passwordController.text,
+                              email: _emailController.text, // Legge il dato reale dal campo
+                              eta: int.tryParse(_ageController.text) ?? 18,
+                              valuta: _selectedCurrency,
+                              fotoProfilo: _immagineSelezionata?.path,
+                            );
                             
-                            // MODIFICA QUI: Riporta l'utente al Login distruggendo la schermata di registrazione
-                            Navigator.pushReplacementNamed(context, AppRoutes.login);
+                            AuthController auth = AuthController();
+                            String? erroreDatabase = await auth.registraUtente(nuovoUtente);
+                            
+                            if (erroreDatabase == null && context.mounted) {
+                              // SUCCESSO
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Registrazione completata! Effettua il login.'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                              Navigator.pushReplacementNamed(context, AppRoutes.login);
+                            
+                            } else if (context.mounted) {
+                              // ERRORE: Mostriamo ESATTAMENTE cosa non va a livello di codice
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('ERRORE DB: $erroreDatabase'), 
+                                  backgroundColor: Colors.red,
+                                  duration: const Duration(seconds: 5), // Dura di più per farti leggere
+                                ),
+                              );
+                            }
                           }
                         },
                         style: ElevatedButton.styleFrom(

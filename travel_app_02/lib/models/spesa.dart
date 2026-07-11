@@ -24,4 +24,22 @@ class Spesa {
     this.viaggioAssociato,
     this.attivitaAssociata,
   });
+
+  Map<String, dynamic> toMap(int idViaggio) {
+    return {
+      'titolo': titolo,
+      'importo': importo,
+      'data': data ?? '',
+      'idViaggio': idViaggio,
+    };
+  }
+
+  factory Spesa.fromMap(Map<String, dynamic> map) {
+    return Spesa(
+      id: map['id'].toString(),
+      titolo: map['titolo'],
+      importo: map['importo'],
+      data: map['data'],
+    );
+  }
 }

@@ -264,6 +264,8 @@ Future<void> _selezionaDateRange(BuildContext context) async {
               _buildButtonNero(
                 testo: 'CONFERMA',
                 onPressed: () {
+                  FocusScope.of(context).unfocus();
+
                   if (_titoloController.text.isNotEmpty && 
                       _destinazioneController.text.isNotEmpty && 
                       _dataPartenza != null && 
@@ -273,10 +275,8 @@ Future<void> _selezionaDateRange(BuildContext context) async {
                     String dataPartenzaStr = format.format(_dataPartenza!);
                     String dataRitornoStr = format.format(_dataRitorno!);
 
-                    // Questa lista dovrà arrivarti dalla pagina precedente o dal database
                     List<Viaggio> listaViaggiAttuali = []; 
                     
-                    // CHIAMATA AL CONTROLLER
                     bool isValido = _viaggioController.validaNuovoViaggio(
                       _titoloController.text, 
                       dataPartenzaStr, 
@@ -285,10 +285,12 @@ Future<void> _selezionaDateRange(BuildContext context) async {
                     );
 
                     if (isValido) {
-                      final nuovoViaggioDati = {
+                      final Map<String, dynamic> nuovoViaggioDati = {
                         'titolo': _titoloController.text,
                         'luogo': _destinazioneController.text,
-                        'data': _dataPartenza, 
+                        'dataInizio': _dataPartenza, 
+                        'dataFine': _dataRitorno,
+                        'budgetPrevisto': double.tryParse(_budgetController.text.replaceAll(',', '.')) ?? 0.0,
                       };
                       Navigator.pop(context, nuovoViaggioDati);
                     } else {
@@ -302,7 +304,7 @@ Future<void> _selezionaDateRange(BuildContext context) async {
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Compila tutti i campi obbligatori!'),
+                          content: Text('Compila tutti i campi! (Hai selezionato le date?)'),
                           backgroundColor: Colors.red,
                         ),
                       );
