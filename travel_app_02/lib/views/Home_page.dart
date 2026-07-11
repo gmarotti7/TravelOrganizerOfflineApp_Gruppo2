@@ -288,10 +288,11 @@ class _HomePageState extends State<HomePage> {
   Widget _buildBottoneNuovoViaggio() {
     return InkWell(
       onTap: () async {
-        final risultato = await Navigator.pushNamed(context, AppRoutes.addTrip);
+      final risultato = await Navigator.pushNamed(context, AppRoutes.addTrip);
 
-        if (risultato != null && risultato is Map<String, dynamic>) {
-          int idUtenteSicuro = Sessione.idUtenteAttuale ?? 1;
+      if (risultato != null && risultato is Map) {
+        
+        int idUtenteSicuro = Sessione.idUtenteAttuale ?? 1;
 
           Trip nuovo = Trip(
             titolo: risultato['titolo'],

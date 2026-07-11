@@ -1,128 +1,362 @@
 import 'package:flutter/material.dart';
-import 'package:travel_app_02/models/stay.dart';
+import 'package:intl/intl.dart';
+import 'package:travel_app_02/controllers/rec_trip_controller.dart';
 import 'package:travel_app_02/controllers/stay_controller.dart';
-import 'BottomBar.dart';
+import 'package:travel_app_02/models/expense.dart';
+import 'package:travel_app_02/models/stay.dart';
+import 'package:travel_app_02/models/trip.dart';
 
-class RecapStay extends StatelessWidget {
-  const RecapStay({Key? key}) : super(key: key);
 
-  Widget _buildRecapItem(String label, String placeholderValue) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '$label: ',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
-          ),
-          Expanded(
-            child: Text(
-              placeholderValue,
-              style: const TextStyle(fontSize: 18, color: Colors.black87),
-            ),
-          ),
-        ],
-      ),
-    );
+import 'package:travel_app_02/route.dart';
+
+class RecapTrip extends StatefulWidget {
+  final RecTripController controller;
+
+  const RecapTrip({
+    super.key,
+    required this.controller,
+  });
+
+  @override
+  State<RecapTrip> createState() => _RecapTripState();
+}
+
+class _RecapTripState extends State<RecapTrip> {
+  final StayController _tappaController = StayController();
+  List<Stay> _tappe = [];
+  bool _caricamentoTappe = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _caricaTappe();
   }
 
-  void _mostraConfermaEliminazione(BuildContext context, Stay tappa) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color.fromRGBO(225, 170, 5, 1),
-        title: const Text('CONFERMA ELIMINAZIONE TAPPA', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('Sei sicuro di voler eliminare l\'attività "${tappa.titolo}"?'),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              // Chiama l'eliminaTappa passando solo l'ID della tappa
-              await StayController().eliminaTappa(tappa.id);
-              if (dialogContext.mounted) Navigator.pop(dialogContext); // Chiude il Pop-Up
-              if (context.mounted) Navigator.pop(context, true); // Torna indietro confermando l'eliminazione
-            },
-            child: const Text('SÌ', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('NO', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
+  Future<void> _caricaTappe() async {
+    final idViaggio = int.tryParse(widget.controller.trip.id);
+    if (idViaggio == null) {
+      setState(() => _caricamentoTappe = false);
+      return;
+    }
+    final tappeDb = await _tappaController.caricaTappeViaggio(idViaggio);
+    setState(() {
+      _tappe = tappeDb;
+      _caricamentoTappe = false;
+    });
+  }
+
+  String _formatValuta(double importo) {
+    return NumberFormat.currency(locale: 'it_IT', symbol: '€').format(importo);
   }
 
   @override
   Widget build(BuildContext context) {
-    // Recupera la tappa passata come argomento tramite la rotta
-    final Stay? tappaPassata = ModalRoute.of(context)?.settings.arguments as Stay?;
-
-    if (tappaPassata == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Dettaglio Tappa')),
-        body: const Center(
-          child: Text('Nessuna tappa selezionata o dati non validi.'),
-        ),
-      );
-    }
+    const Color gialloSfondo = Color(0xFFFFB84D);
+    final trip = widget.controller.trip;
 
     return Scaffold(
-      backgroundColor: const Color.fromRGBO(225, 170, 5, 1),
+      backgroundColor: gialloSfondo,
       appBar: AppBar(
-        backgroundColor: const Color.fromRGBO(225, 170, 5, 1),
+        backgroundColor: gialloSfondo,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'RIEPILOGO TAPPA',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        leading: const BackButton(color: Colors.black),
+        title: Text(
+          trip.titolo,
+          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         actions: [
+          Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: widget.controller.statoViaggioColor,
+              border: Border.all(color: Colors.black, width: 2),
+            ),
+          ),
+          const SizedBox(width: 8),
           PopupMenuButton<String>(
             icon: const Icon(Icons.menu, color: Colors.black),
-            onSelected: (value) {
-              if (value == 'elimina') {
-                _mostraConfermaEliminazione(context, tappaPassata);
+            onSelected: (valore) {
+              if (valore == 'elimina') {
+                _mostraConfermaEliminazioneViaggio(context);
+              } else if (valore == 'modifica') {
+                // TODO: Navigator.pushNamed(context, AppRoutes.addTrip, arguments: trip);
               }
             },
             itemBuilder: (context) => const [
-              PopupMenuItem(value: 'modifica', child: Text('MODIFICA TAPPA')),
-              PopupMenuItem(value: 'elimina', child: Text('ELIMINA TAPPA')),
+              PopupMenuItem(value: 'modifica', child: Text('MODIFICA VIAGGIO')),
+              PopupMenuItem(value: 'elimina', child: Text('ELIMINA VIAGGIO')),
             ],
           ),
+          const SizedBox(width: 16),
         ],
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildRecapItem('DATA', tappaPassata.data.isEmpty ? 'Non specificata' : tappaPassata.data),
-              _buildRecapItem('ORA', tappaPassata.ora.isEmpty ? 'Non specificata' : tappaPassata.ora),
-              _buildRecapItem('TITOLO', tappaPassata.titolo),
-              _buildRecapItem('COSTO PREVISTO', '${tappaPassata.costoPrevisto.toStringAsFixed(2)} EUR'),
-              const SizedBox(height: 10),
-              const Text(
-                'DESCRIZIONE:',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // La descrizione non è ancora un campo di Viaggio: se/quando verrà aggiunta
+            // dal tuo compagno nella creazione viaggio, va sostituita qui sotto.
+            Text(
+              trip.luogo,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.black,
+                fontStyle: FontStyle.italic,
+                fontSize: 16,
               ),
-              const SizedBox(height: 5),
-              Text(
-                (tappaPassata.descrizione == null || tappaPassata.descrizione!.isEmpty)
-                    ? 'Nessuna descrizione'
-                    : tappaPassata.descrizione!,
-                style: const TextStyle(fontSize: 18, color: Colors.black87),
+            ),
+            const SizedBox(height: 20),
+
+            // Contenitore Bianco per TAPPE, PACKLIST e CHECKLIST
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.black, width: 1.5),
               ),
-              const SizedBox(height: 40),
-            ],
-          ),
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                children: [
+                  const Text(
+                    "TAPPE",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+
+                  if (_caricamentoTappe)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: CircularProgressIndicator(),
+                    )
+                  else if (_tappe.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Text("Nessuna tappa ancora aggiunta"),
+                    )
+                  else
+                    ..._tappe.map(
+                      (tappa) => InkWell(
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.recapStay,
+                            arguments: tappa,
+                          );
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                          margin: const EdgeInsets.only(bottom: 6),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black54),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            "- ${tappa.titolo}",
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    onPressed: () async {
+                      final idViaggio = int.tryParse(trip.id);
+                      if (idViaggio == null) return;
+                      final risultato = await Navigator.pushNamed(context, AppRoutes.newStay);
+                      if (risultato != null && risultato is Stay) {
+                        final tappaSalvata = await _tappaController.salvaNuovaTappa(risultato, idViaggio);
+                        setState(() => _tappe.add(tappaSalvata));
+                      }
+                    },
+                    child: const Text("+ Aggiungi Tappa"),
+                  ),
+
+                  const SizedBox(height: 16),
+                  const Text(
+                    "PACKLIST",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black54),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text("- Vedi Packlist", style: TextStyle(fontWeight: FontWeight.w500)),
+                  ),
+
+                  const SizedBox(height: 16),
+                  const Text(
+                    "CHECKLIST",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black54),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text("- Vedi Checklist", style: TextStyle(fontWeight: FontWeight.w500)),
+                  ),
+
+                  const SizedBox(height: 20),
+                  const Divider(color: Colors.black),
+                  const SizedBox(height: 8),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "SPESE TOT: ",
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      Text(
+                        _formatValuta(widget.controller.speseTotali),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: widget.controller.speseTotaliColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            ElevatedButton(
+              onPressed: () async {
+                final nuovaSpesa = await Navigator.pushNamed(context, AppRoutes.newCost);
+                if (nuovaSpesa != null && nuovaSpesa is Expense) {
+                  setState(() {
+                    widget.controller.aggiungiSpesa(nuovaSpesa);
+                  });
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                "+ AGGIUNGI SPESA",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Contenitore Bianco per la LISTA SPESE
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.black, width: 1.5),
+              ),
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "LISTA SPESE:",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  ...trip.spese.map(
+                    (spesa) => InkWell(
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.recapCost,
+                          arguments: spesa,
+                        );
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                        margin: const EdgeInsets.only(bottom: 6),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.black54),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "- ${spesa.titolo}",
+                              style: const TextStyle(fontWeight: FontWeight.w500),
+                            ),
+                            Text(
+                              _formatValuta(spesa.importo),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            Text(
+              "BUDGET PREVISTO: ${_formatValuta(trip.budgetPrevisto)}",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
         ),
       ),
-      bottomNavigationBar: const CustomBottomNavBar(),
+    );
+  }
+
+  void _mostraConfermaEliminazioneViaggio(BuildContext context) {
+    final trip = widget.controller.trip;
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('CONFERMA ELIMINAZIONE VIAGGIO'),
+        content: Text('Sei sicuro di voler eliminare il viaggio "${trip.titolo}"?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              // TODO: chiamare un metodo tipo ViaggioController.eliminaViaggio(trip.id)
+              // e poi tornare alla Home rimuovendo questa schermata dallo stack.
+              Navigator.pop(context);
+            },
+            child: const Text('SÌ'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('NO'),
+          ),
+        ],
+      ),
     );
   }
 }
