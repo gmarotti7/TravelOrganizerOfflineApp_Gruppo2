@@ -24,6 +24,10 @@ class AppRoutes {
   static const String profile = '/profile';
   static const String riepilogoViaggio = '/riepilogo_viaggio';
   static const String addTrip = '/add_trip';
+  static const String statsPage = '/stats';
+  static const String newCost = '/new_cost';
+  static const String recapCost = '/recap_cost';
+
 
 
 
@@ -43,6 +47,10 @@ class AppRoutes {
         );
       },
       addTrip: (context) => const AddTrip(),
+      statsPage: (context) => const StatsPage(),
+      newCost: (context) => const NewCost(),
+      recapCost: (context) => const RecapCost(),
+
     };
   }
 }
