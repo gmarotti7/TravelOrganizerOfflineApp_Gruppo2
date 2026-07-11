@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:travel_app_02/route.dart';
-import 'package:flutter/foundation.dart';
-import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart'; 
 import 'package:sqflite/sqflite.dart';
 
-void main() {
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (kIsWeb) {
-    databaseFactory = databaseFactoryFfiWeb;
-  }
   runApp(const TravelApp());
 }
 
