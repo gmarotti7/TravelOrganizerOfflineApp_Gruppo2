@@ -10,6 +10,7 @@ import 'package:travel_app_02/views/sign_up.dart'; // Sbloccato import registraz
 import 'package:travel_app_02/models/viaggio.dart';
 import 'package:travel_app_02/controllers/riepilogo_viaggio_controller.dart';
 import 'package:travel_app_02/views/riepilogo_viaggio.dart';
+import 'package:travel_app_02/views/Add_check.dart';
 
 class AppRoutes {
   static const String start = '/';
@@ -20,6 +21,7 @@ class AppRoutes {
   static const String profile = '/profile';
   static const String riepilogoViaggio = '/riepilogo_viaggio';
   static const String addTrip = '/add_trip';
+  static const String addCheck = '/add_check';
 
 
 
@@ -39,6 +41,7 @@ class AppRoutes {
         );
       },
       addTrip: (context) => const AddTrip(),
+      addCheck:(context) => const AddCheck(),
     };
   }
 }
