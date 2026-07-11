@@ -10,10 +10,7 @@ import 'package:travel_app_02/views/StatsPage.dart';
 import 'package:travel_app_02/views/start.dart'; 
 import 'package:travel_app_02/views/login.dart';   // Sbloccato import login
 import 'package:travel_app_02/views/sign_up.dart'; // Sbloccato import registrazione
-import 'package:travel_app_02/models/viaggio.dart';
-import 'package:travel_app_02/controllers/riepilogo_viaggio_controller.dart';
 import 'package:travel_app_02/views/riepilogo_viaggio.dart';
-import 'package:travel_app_02/views/Add_check.dart';
 
 class AppRoutes {
   static const String start = '/';

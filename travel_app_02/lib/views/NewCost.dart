@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:travel_app_02/models/spesa.dart';
-import 'package:travel_app_02/route.dart';
 import 'BottomBar.dart'; // Import aggiornato con il nuovo nome del file
 
 class NewCost extends StatefulWidget {
@@ -26,7 +25,6 @@ class _NewCostState extends State<NewCost> {
   String _valutaSelezionata = 'EUR';
 
   // Variabili per gli errori in tempo reale
-  String? _erroreData;
   String? _erroreOra;
 
   // Funzione per mostrare il calendario
@@ -72,13 +70,11 @@ class _NewCostState extends State<NewCost> {
   // --- LOGICA CONTROLLO DATA ---
   void _validaData(String valore) {
     if (valore.isEmpty) {
-      setState(() => _erroreData = null);
       return;
     }
 
     final regex = RegExp(r'^\d{2}/\d{2}/\d{4}$');
     if (!regex.hasMatch(valore)) {
-      setState(() => _erroreData = 'Data non valida');
       return;
     }
 
@@ -88,7 +84,6 @@ class _NewCostState extends State<NewCost> {
     final anno = int.tryParse(parti[2]) ?? 0;
 
     if (mese < 1 || mese > 12) {
-      setState(() => _erroreData = 'Data non valida');
       return;
     }
 
@@ -101,11 +96,9 @@ class _NewCostState extends State<NewCost> {
     }
 
     if (giorno < 1 || giorno > maxGiorni) {
-      setState(() => _erroreData = 'Data non valida');
       return;
     }
 
-    setState(() => _erroreData = null);
   }
 
   // --- LOGICA CONTROLLO ORA ---

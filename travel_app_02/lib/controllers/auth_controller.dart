@@ -14,6 +14,16 @@ class AuthController {
     }
   }
 
+  // Metodo per aggiornare i dati di un utente esistente
+  Future<String?> aggiornaUtente(Utente utenteModificato) async {
+    try {
+      await DatabaseHelper.instance.update('utenti', utenteModificato.toMap());
+      return null; // Tutto ok!
+    } catch (e) {
+      return e.toString(); // Restituisce l'errore se qualcosa va storto
+    }
+  }
+
   // Metodo per fare il Login
   Future<Utente?> eseguiLogin(String username, String password) async {
     final db = await DatabaseHelper.instance.database;

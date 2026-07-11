@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:travel_app_02/route.dart';
-import 'package:travel_app_02/services/database_helper.dart';
 import 'package:travel_app_02/sessione.dart';
 import 'package:travel_app_02/controllers/auth_controller.dart';
 
@@ -41,13 +40,6 @@ class _LoginState extends State<Login> {
         borderSide: BorderSide.none,
       ),
     );
-  }
-
-  bool _verificaCredenzialiDatabase(String username, String password) {
-    if (username == 'admin' && password == '1234') {
-      return true;
-    }
-    return false;
   }
 
   void _eseguiLogin() async {

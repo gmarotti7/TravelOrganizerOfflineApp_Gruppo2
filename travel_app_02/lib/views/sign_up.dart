@@ -6,6 +6,7 @@ import 'package:travel_app_02/models/utente.dart';
 import 'package:travel_app_02/route.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:travel_app_02/sessione.dart';
 
 class SignUp extends StatefulWidget {
   const SignUp({super.key});
@@ -27,6 +28,7 @@ class _SignUp extends State<SignUp> {
   
   // Variabile per monitorare la presenza della @ in tempo reale
   bool _hasAtSymbol = false;
+  bool _isCaricamento = false;
   
   // Variabile per la valuta selezionata
   String _selectedCurrency = 'EUR';
@@ -313,75 +315,110 @@ class _SignUp extends State<SignUp> {
 
                       // Pulsante CONFERMA
                       ElevatedButton(
-                        onPressed: () async {
+                        onPressed: _isCaricamento ? null : () async {
                           FocusScope.of(context).unfocus();
-
                           if (_usernameController.text.isEmpty || 
-                              _emailController.text.isEmpty || 
-                              _ageController.text.isEmpty || 
-                              _passwordController.text.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Errore: Compila tutti i campi!'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                            return;
-                          }
-
-                          if (_validaCampi()) {
-                            debugPrint("Dati validi! Pronto al salvataggio.");
-                            Utente nuovoUtente = Utente(
-                              username: _usernameController.text,
-                              password: _passwordController.text,
-                              email: _emailController.text, // Legge il dato reale dal campo
-                              eta: int.tryParse(_ageController.text) ?? 18,
-                              valuta: _selectedCurrency,
-                              fotoProfilo: _immagineSelezionata?.path,
-                            );
-                            
-                            AuthController auth = AuthController();
-                            String? erroreDatabase = await auth.registraUtente(nuovoUtente);
-                            
-                            if (erroreDatabase == null && context.mounted) {
-                              // SUCCESSO
+                            _emailController.text.isEmpty || 
+                            _ageController.text.isEmpty || 
+                            _passwordController.text.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Registrazione completata! Effettua il login.'),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                              Navigator.pushReplacementNamed(context, AppRoutes.login);
-                            
-                            } else if (context.mounted) {
-                              // ERRORE: Mostriamo ESATTAMENTE cosa non va a livello di codice
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('ERRORE DB: $erroreDatabase'), 
-                                  backgroundColor: Colors.red,
-                                  duration: const Duration(seconds: 5), // Dura di più per farti leggere
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          minimumSize: const Size(220, 55),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text(
-                          'CONFERMA',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                      ),
+                                  content: Text('Errore: Compila tutti i campi!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return; 
+    }
+
+    if (_validaCampi()) {
+      
+      // 1. BLOCCO IL PULSANTE
+      setState(() {
+        _isCaricamento = true;
+      });
+
+      // 2. USO IL TRIM() QUI SUI CAMPI DI TESTO
+      Utente utenteDaSalvare = Utente(
+        id: Sessione.idUtenteAttuale, 
+        username: _usernameController.text.trim(), 
+        password: _passwordController.text,
+        email: _emailController.text.trim(), 
+        eta: int.tryParse(_ageController.text) ?? 18,
+        valuta: _selectedCurrency,
+        fotoProfilo: _immagineSelezionata?.path,
+      );
+
+      AuthController auth = AuthController();
+      String? erroreDatabase;
+
+      // 3. ESEGUO L'AZIONE NEL DB
+      if (Sessione.idUtenteAttuale != null) {
+        erroreDatabase = await auth.aggiornaUtente(utenteDaSalvare);
+      } else {
+        erroreDatabase = await auth.registraUtente(utenteDaSalvare);
+      }
+
+      // 4. SBLOCCO IL PULSANTE
+      if (context.mounted) {
+        setState(() {
+          _isCaricamento = false;
+        });
+      }
+
+      // 5. GESTISCO I MESSAGGI A SCHERMO
+      if (erroreDatabase == null && context.mounted) {
+        if (Sessione.idUtenteAttuale != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profilo aggiornato con successo!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context); 
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Registrazione completata! Effettua il login.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pushReplacementNamed(context, AppRoutes.login);
+        }
+      } else if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('ERRORE DB: $erroreDatabase'), 
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  },
+  style: ElevatedButton.styleFrom(
+    disabledBackgroundColor: Colors.grey[800], 
+    backgroundColor: Colors.black,
+    minimumSize: const Size(220, 55),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(10),
+    ),
+  ),
+  child: _isCaricamento 
+    ? const SizedBox(
+        height: 25, 
+        width: 25, 
+        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3)
+      )
+    : const Text(
+        'CONFERMA',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 22,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 1.5,
+        ),
+      ),
+),
                     ],
                   ),
                 ),

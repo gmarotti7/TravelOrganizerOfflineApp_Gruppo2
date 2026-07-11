@@ -112,4 +112,11 @@ class DatabaseHelper {
     final db = await instance.database;
     return await db.delete(table, where: where, whereArgs: whereArgs);
   }
+
+  // AGGIORNAMENTO
+  Future<int> update(String table, Map<String, dynamic> row) async {
+    final db = await instance.database;
+    int id = row['id']; // Prende l'ID dell'oggetto che gli passiamo
+    return await db.update(table, row, where: 'id = ?', whereArgs: [id]);
+  }
 }
