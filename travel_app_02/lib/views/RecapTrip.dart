@@ -136,12 +136,15 @@ class _RecapTripState extends State<RecapTrip> {
                   else
                     ..._tappe.map(
                       (tappa) => InkWell(
-                        onTap: () {
-                          Navigator.pushNamed(
+                        onTap: () async {
+                          final aggiorna = await Navigator.pushNamed(
                             context,
                             AppRoutes.recapStay,
                             arguments: tappa,
                           );
+                          if (aggiorna == true) {
+                            _caricaTappe();
+                          }
                         },
                         child: Container(
                           width: double.infinity,
@@ -160,21 +163,17 @@ class _RecapTripState extends State<RecapTrip> {
                     ),
 
                   const SizedBox(height: 8),
-                  
-                  // PULSANTE AGGIUNGI TAPPA CORRETTO
+
+                  // PULSANTE AGGIUNGI TAPPA
                   OutlinedButton(
                     onPressed: () async {
-                      // 1. Apri la schermata per creare la nuova tappa
                       final risultato = await Navigator.pushNamed(context, AppRoutes.newStay);
-                      
-                      // 2. Se l'utente ha compilato e salvato
                       if (risultato != null && risultato is Stay) {
-                        final idViaggioInt = int.tryParse(trip.id);
-                        if (idViaggioInt != null) {
-                          final tappaSalvata = await _tappaController.salvaNuovaTappa(risultato, idViaggioInt);
+                        final idViaggio = int.tryParse(trip.id);
+                        if (idViaggio != null) {
+                          final tappaSalvata = await _tappaController.salvaNuovaTappa(risultato, idViaggio);
                           setState(() => _tappe.add(tappaSalvata));
                         } else {
-                          // Se l'id del viaggio non è intero, aggiungi la tappa alla lista locale
                           setState(() => _tappe.add(risultato));
                         }
                       }
@@ -185,27 +184,45 @@ class _RecapTripState extends State<RecapTrip> {
                   const SizedBox(height: 16),
                   const Text("PACKLIST", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black54),
-                      borderRadius: BorderRadius.circular(6),
+                  
+                  // PACKLIST CLICKABILE
+                  InkWell(
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Funzionalità Packlist in arrivo!')),
+                      );
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.black54),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text("- Vedi Packlist", style: TextStyle(fontWeight: FontWeight.w500)),
                     ),
-                    child: const Text("- Vedi Packlist", style: TextStyle(fontWeight: FontWeight.w500)),
                   ),
 
                   const SizedBox(height: 16),
                   const Text("CHECKLIST", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black54),
-                      borderRadius: BorderRadius.circular(6),
+
+                  // CHECKLIST CLICKABILE
+                  InkWell(
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Funzionalità Checklist in arrivo!')),
+                      );
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.black54),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text("- Vedi Checklist", style: TextStyle(fontWeight: FontWeight.w500)),
                     ),
-                    child: const Text("- Vedi Checklist", style: TextStyle(fontWeight: FontWeight.w500)),
                   ),
 
                   const SizedBox(height: 20),
@@ -263,7 +280,7 @@ class _RecapTripState extends State<RecapTrip> {
 
             const SizedBox(height: 16),
 
-            // Contenitore Bianco per la LISTA SPESE
+            // LISTA SPESE
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
