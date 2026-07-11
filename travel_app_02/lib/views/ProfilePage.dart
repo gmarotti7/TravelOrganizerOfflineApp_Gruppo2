@@ -102,6 +102,30 @@ class ProfilePage extends StatelessWidget {
                 // TODO: Collegare il metodo del Controller per effettuare il logout
               },
             ),
+
+            const SizedBox(height: 25),
+
+            // 5. BOTTONE ELIMINA ACCOUNT
+            _buildMenuButton(
+              testo: 'ELIMINA ACCOUNT',
+              icona: Icons.delete_forever,
+              onPressed: () async {
+                // TODO: Chiamare _profileController.eliminaAccount(idUtente);
+                
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Account eliminato', style: TextStyle(fontWeight: FontWeight.bold)),
+                      backgroundColor: Colors.black,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                  
+                  // Rimuove la cronologia di navigazione e torna alla pagina di Start
+                  Navigator.pushNamedAndRemoveUntil(context, AppRoutes.start, (route) => false);
+                }
+              },
+            ),
           ],
         ),
       ),

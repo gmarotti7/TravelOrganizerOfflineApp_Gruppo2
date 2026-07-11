@@ -1,7 +1,9 @@
 // lib/views/sign_up.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:travel_app_02/route.dart'; // Import per accedere ad AppRoutes
+import 'package:travel_app_02/route.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class SignUp extends StatefulWidget {
   const SignUp({super.key});
@@ -29,6 +31,48 @@ class _SignUp extends State<SignUp> {
 
   // Lista delle valute principali
   final List<String> _currencies = ['EUR', 'USD', 'GBP', 'JPY', 'CHF'];
+
+  File? _immagineSelezionata;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _scegliImmagine(ImageSource sorgente) async {
+    final XFile? immagine = await _picker.pickImage(source: sorgente);
+    
+    if (immagine != null) {
+      setState(() {
+        _immagineSelezionata = File(immagine.path);
+      });
+    }
+  }
+
+  void _mostraMenuSceltaFoto() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.black,
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: Colors.amber),
+              title: const Text('Scegli dalla Galleria', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.of(context).pop();
+                _scegliImmagine(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Colors.amber),
+              title: const Text('Scatta una Foto', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.of(context).pop();
+                _scegliImmagine(ImageSource.camera);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -128,6 +172,36 @@ class _SignUp extends State<SignUp> {
                       ),
                       
                       const SizedBox(height: 40),
+
+                      // --- WIDGET FOTO PROFILO ---
+                      GestureDetector(
+                        onTap: _mostraMenuSceltaFoto,
+                        child: Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            CircleAvatar(
+                              radius: 55,
+                              backgroundColor: Colors.black,
+                              backgroundImage: _immagineSelezionata != null 
+                                  ? FileImage(_immagineSelezionata!) 
+                                  : null,
+                              child: _immagineSelezionata == null
+                                  ? const Icon(Icons.person, size: 60, color: Colors.white54)
+                                  : null,
+                            ),
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.camera_alt, size: 20, color: Colors.black),
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 30), // Spazio prima dell'username
 
                       // Campo USERNAME
                       TextField(
