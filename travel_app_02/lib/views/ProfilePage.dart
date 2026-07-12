@@ -6,198 +6,242 @@ import 'package:travel_app_02/models/utente.dart';
 import 'package:travel_app_02/controllers/profile_controller.dart';
 import 'BottomBar.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // 1. Istanziamo il controller
-    final ProfileController _profileController = ProfileController();
-    
-    // 2. Recuperiamo l'ID della sessione (se sei loggato, sarà il tuo ID reale)
-    final int idUtente = Sessione.idUtenteAttuale ?? 1;
+  State<ProfilePage> createState() => _ProfilePageState();
+}
 
+class _ProfilePageState extends State<ProfilePage> {
+  final ProfileController _profileController = ProfileController();
+  late Future<Utente?> _futureUtente;
+
+  @override
+  void initState() {
+    super.initState();
+    _caricaUtente();
+  }
+
+  void _caricaUtente() {
+    final int idUtente = Sessione.idUtenteAttuale ?? 1;
+    _futureUtente = _profileController.getUtenteLoggato(idUtente);
+  }
+
+  // Menu a tendina: quale campo del profilo vuoi modificare
+  void _mostraMenuModificaProfilo(BuildContext context, Utente utente) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('Username'),
+              onTap: () => _apriModificaCampo(context, utente, 'username', 'Username'),
+            ),
+            ListTile(
+              title: const Text('Email'),
+              onTap: () => _apriModificaCampo(context, utente, 'email', 'Email'),
+            ),
+            ListTile(
+              title: const Text('Età'),
+              onTap: () => _apriModificaCampo(context, utente, 'eta', 'Età'),
+            ),
+            ListTile(
+              title: const Text('Valuta'),
+              onTap: () => _apriModificaCampo(context, utente, 'valuta', 'Valuta'),
+            ),
+            ListTile(
+              title: const Text('Password'),
+              onTap: () => _apriModificaCampo(context, utente, 'password', 'Password'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _apriModificaCampo(BuildContext context, Utente utente, String campo, String label) async {
+    Navigator.pop(context); // chiude il menu a tendina
+
+    final risultato = await Navigator.pushNamed(
+      context,
+      AppRoutes.editProfileField,
+      arguments: {'utente': utente, 'campo': campo, 'label': label},
+    );
+
+    if (risultato != null && risultato is Map) {
+      // Ricarichiamo i dati dal database così la pagina mostra subito il
+      // valore aggiornato (utile anche per la password, che non torna qui).
+      setState(() {
+        _caricaUtente();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, result){
+      onPopInvokedWithResult: (didPop, result) {
         if (!didPop) {
-        // Forziamo il ritorno alla Home
+          // Forziamo il ritorno alla Home
           Navigator.pushReplacementNamed(context, AppRoutes.home);
         }
       },
-
-    child: Scaffold(
-      backgroundColor: Colors.amber,
-      
-      // --- BARRA SUPERIORE ---
-      appBar: AppBar(
+      child: Scaffold(
         backgroundColor: Colors.amber,
-        elevation: 0,
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'IL TUO PROFILO',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-            fontSize: 24,
+
+        // --- BARRA SUPERIORE ---
+        appBar: AppBar(
+          backgroundColor: Colors.amber,
+          elevation: 0,
+          centerTitle: true,
+          automaticallyImplyLeading: false,
+          title: const Text(
+            'IL TUO PROFILO',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+              fontSize: 24,
+            ),
           ),
         ),
-      ),
-      
-      // --- CORPO CENTRALE DINAMICO ---
-      // FutureBuilder interroga il database in background prima di mostrare la UI
-      body: FutureBuilder<Utente?>(
-        future: _profileController.getUtenteLoggato(idUtente),
-        builder: (context, snapshot) {
-          
-          // Mentre carica, mostra un cerchio di caricamento
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: Colors.black));
-          }
 
-          // Estrapoliamo i dati dal database
-          final Utente? utente = snapshot.data;
-          
-          // Se non trova dati, usa valori di default
-          final String usernameDisplay = utente?.username ?? 'Ospite';
-          final String emailDisplay = utente?.email ?? 'Nessuna email';
-          final String fotoPath = utente?.fotoProfilo ?? '';
+        // --- CORPO CENTRALE DINAMICO ---
+        body: FutureBuilder<Utente?>(
+          future: _futureUtente,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator(color: Colors.black));
+            }
 
-          return Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch, 
-              children: [
-                
-                // 1. SEZIONE INFO UTENTE (Immagine + Testi)
-                Row(
-                  children: [
-                    // FOTO PROFILO DINAMICA
-                    Container(
-                      width: 85,
-                      height: 85,
-                      decoration: BoxDecoration(
-                        color: Colors.black, // Sfondo di base
-                        shape: BoxShape.circle,
-                        // Se c'è un percorso foto, la carica dal file system
-                        image: fotoPath.isNotEmpty 
-                          ? DecorationImage(
-                              image: FileImage(File(fotoPath)),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                      ),
-                      // Mostra l'icona bianca base SOLO se la foto non c'è
-                      child: fotoPath.isEmpty 
-                        ? const Icon(Icons.person, size: 60, color: Colors.white54)
-                        : null,
-                    ),
-                    const SizedBox(width: 15),
-                    
-                    // TESTI DINAMICI
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'USERNAME: $usernameDisplay',
-                            style: const TextStyle(
-                              fontSize: 18, 
-                              fontWeight: FontWeight.bold, 
-                              color: Colors.black
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            'EMAIL: $emailDisplay', 
-                            style: const TextStyle(
-                              fontSize: 18, 
-                              fontWeight: FontWeight.bold, 
-                              color: Colors.black
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                
-                const SizedBox(height: 50),
+            final int idUtente = Sessione.idUtenteAttuale ?? 1;
+            final Utente? utente = snapshot.data;
 
-                // 2. BOTTONE MODIFICA
-                _buildMenuButton(
-                  testo: 'MODIFICA',
-                  onPressed: () {
-                    // TODO: Aggiungere logica di modifica
-                    Navigator.pushNamed(context, AppRoutes.register);
-                  },
-                ),
-                
-                const SizedBox(height: 25),
+            final String usernameDisplay = utente?.username ?? 'Ospite';
+            final String emailDisplay = utente?.email ?? 'Nessuna email';
+            final String fotoPath = utente?.fotoProfilo ?? '';
 
-                // 3. BOTTONE STATISTICHE
-                _buildMenuButton(
-                  testo: 'STATISTICHE',
-                  onPressed: () {
-                    Navigator.pushNamed(context, AppRoutes.statsPage);
-                  },
-                ),
-                
-                const SizedBox(height: 25),
-
-                // 4. BOTTONE LOGOUT
-                _buildMenuButton(
-                  testo: 'LOGOUT',
-                  icona: Icons.power_settings_new, 
-                  onPressed: () {
-                    // Pulisce la sessione disconnettendo l'utente
-                    Sessione.idUtenteAttuale = null;
-                    Navigator.pushNamedAndRemoveUntil(context, AppRoutes.start, (route) => false);
-                  },
-                ),
-
-                const SizedBox(height: 25),
-
-                // 5. BOTTONE ELIMINA ACCOUNT
-                _buildMenuButton(
-                  testo: 'ELIMINA ACCOUNT',
-                  icona: Icons.delete_forever,
-                  coloreSfondo: Colors.red, // Rosso per pericolo
-                  onPressed: () async {
-                    bool eliminato = await _profileController.eliminaAccount(idUtente);
-                    
-                    if (eliminato && context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Account eliminato con successo.', style: TextStyle(fontWeight: FontWeight.bold)),
-                          backgroundColor: Colors.black,
-                          duration: Duration(seconds: 2),
+            return Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // 1. SEZIONE INFO UTENTE (Immagine + Testi)
+                  Row(
+                    children: [
+                      Container(
+                        width: 85,
+                        height: 85,
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          shape: BoxShape.circle,
+                          image: fotoPath.isNotEmpty
+                              ? DecorationImage(
+                                  image: FileImage(File(fotoPath)),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
-                      );
-                      
+                        child: fotoPath.isEmpty
+                            ? const Icon(Icons.person, size: 60, color: Colors.white54)
+                            : null,
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'USERNAME: $usernameDisplay',
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              'EMAIL: $emailDisplay',
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 50),
+
+                  // 2. BOTTONE MODIFICA
+                  _buildMenuButton(
+                    testo: 'MODIFICA',
+                    onPressed: utente == null
+                        ? null
+                        : () => _mostraMenuModificaProfilo(context, utente),
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  // 3. BOTTONE STATISTICHE
+                  _buildMenuButton(
+                    testo: 'STATISTICHE',
+                    onPressed: () {
+                      Navigator.pushNamed(context, AppRoutes.statsPage);
+                    },
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  // 4. BOTTONE LOGOUT
+                  _buildMenuButton(
+                    testo: 'LOGOUT',
+                    icona: Icons.power_settings_new,
+                    onPressed: () {
                       Sessione.idUtenteAttuale = null;
                       Navigator.pushNamedAndRemoveUntil(context, AppRoutes.start, (route) => false);
-                    }
-                  },
-                ),
-              ],
-            ),
-          );
-        }
+                    },
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  // 5. BOTTONE ELIMINA ACCOUNT
+                  _buildMenuButton(
+                    testo: 'ELIMINA ACCOUNT',
+                    icona: Icons.delete_forever,
+                    coloreSfondo: Colors.red,
+                    onPressed: () async {
+                      bool eliminato = await _profileController.eliminaAccount(idUtente);
+
+                      if (eliminato && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Account eliminato con successo.', style: TextStyle(fontWeight: FontWeight.bold)),
+                            backgroundColor: Colors.black,
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+
+                        Sessione.idUtenteAttuale = null;
+                        Navigator.pushNamedAndRemoveUntil(context, AppRoutes.start, (route) => false);
+                      }
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+
+        bottomNavigationBar: const CustomBottomNavBar(),
       ),
-      
-      bottomNavigationBar: const CustomBottomNavBar(),
-    ),
     );
   }
 
   // --- WIDGET DI SUPPORTO PER I BOTTONI ---
   Widget _buildMenuButton({
-    required String testo, 
-    IconData? icona, 
+    required String testo,
+    IconData? icona,
     Color coloreSfondo = Colors.black,
-    required VoidCallback onPressed
+    required VoidCallback? onPressed,
   }) {
     return ElevatedButton(
       onPressed: onPressed,
@@ -219,8 +263,8 @@ class ProfilePage extends StatelessWidget {
           Text(
             testo,
             style: const TextStyle(
-              fontSize: 20, 
-              fontWeight: FontWeight.bold
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],

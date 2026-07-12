@@ -18,9 +18,10 @@ class Trip {
     required this.dataInizio,
     required this.dataFine,
     required this.budgetPrevisto,
-    this.tappe = const [],
-    this.spese = const [],
-  });
+    List<Stay>? tappe,
+    List<Expense>? spese,
+  })  : tappe = tappe ?? [],
+        spese = spese ?? [];
 
   // Da Oggetto a riga SQLite
   Map<String, dynamic> toMap(int idUtente) {

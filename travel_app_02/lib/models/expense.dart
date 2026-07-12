@@ -6,23 +6,23 @@ class Expense {
   final String? data;
   final String? descrizione;
   final String? metodoPagamento;
-  // --- I 3 NUOVI CAMPI ---
   final String? categoria;
   final String? viaggioAssociato;
   final String? attivitaAssociata;
+  final String? valuta;
 
   Expense({
-    required this.id, 
-    required this.titolo, 
+    required this.id,
+    required this.titolo,
     required this.importo,
     this.stato,
     this.data,
     this.descrizione,
     this.metodoPagamento,
-    // --- I 3 NUOVI CAMPI ---
     this.categoria,
     this.viaggioAssociato,
     this.attivitaAssociata,
+    this.valuta,
   });
 
   Map<String, dynamic> toMap(int idViaggio) {
@@ -30,6 +30,12 @@ class Expense {
       'titolo': titolo,
       'importo': importo,
       'data': data ?? '',
+      'stato': stato ?? '',
+      'descrizione': descrizione ?? '',
+      'metodoPagamento': metodoPagamento ?? '',
+      'categoria': categoria ?? '',
+      'attivitaAssociata': attivitaAssociata ?? '',
+      'valuta': valuta ?? 'EUR',
       'idViaggio': idViaggio,
     };
   }
@@ -38,8 +44,15 @@ class Expense {
     return Expense(
       id: map['id'].toString(),
       titolo: map['titolo'],
-      importo: map['importo'],
+      importo: (map['importo'] as num).toDouble(),
       data: map['data'],
+      stato: map['stato'],
+      descrizione: map['descrizione'],
+      metodoPagamento: map['metodoPagamento'],
+      categoria: map['categoria'],
+      attivitaAssociata: map['attivitaAssociata'],
+      viaggioAssociato: map['idViaggio']?.toString(),
+      valuta: map['valuta'],
     );
   }
 }

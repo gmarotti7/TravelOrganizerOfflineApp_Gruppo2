@@ -28,4 +28,15 @@ class ProfileController {
       return false;
     }
   }
+
+  // Aggiorna un singolo campo del profilo (usato dalla schermata di modifica,
+  // dove l'utente sceglie quale campo cambiare: username, email, età, valuta...)
+  Future<void> aggiornaCampoUtente(int idUtente, String colonna, dynamic valore) async {
+    await DatabaseHelper.instance.update(
+      'utenti',
+      {colonna: valore},
+      where: 'id = ?',
+      whereArgs: [idUtente],
+    );
+  }
 }

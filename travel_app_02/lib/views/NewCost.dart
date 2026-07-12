@@ -12,7 +12,8 @@ class NewCost extends StatefulWidget {
 }
 
 class _NewCostState extends State<NewCost> {
-  // Aggiungi questi controller sotto le altre tue variabili
+  final _formKey = GlobalKey<FormState>();
+
   final _titoloController = TextEditingController();
   final _costoController = TextEditingController();
   final _dataController = TextEditingController();
@@ -26,28 +27,25 @@ class _NewCostState extends State<NewCost> {
   String? _metodoPagamento;
   String _valutaSelezionata = 'EUR';
 
-  // Variabili per gli errori in tempo reale
   String? _erroreOra;
 
-  // Funzione per mostrare il calendario
   Future<void> _selezionaData(BuildContext context) async {
     final DateTime? dataSelezionata = await showDatePicker(
       context: context,
-      initialDate: _viaggioSelezionato?.dataInizio ?? DateTime.now(), // Data di partenza
-      firstDate: _viaggioSelezionato?.dataInizio ?? DateTime(2000),   // Data minima
-      lastDate: _viaggioSelezionato?.dataFine ?? DateTime(2100),    // Data massima
-      // Personalizziamo i colori per farli abbinare al tuo tema Giallo/Nero!
+      initialDate: _viaggioSelezionato?.dataInizio ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: _viaggioSelezionato?.dataFine ?? DateTime(2100),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Colors.black, // Colore dell'intestazione e dei giorni selezionati
-              onPrimary: Colors.amber, // Colore del testo sul nero
-              onSurface: Colors.black, // Colore dei giorni normali
+              primary: Colors.black,
+              onPrimary: Colors.amber,
+              onSurface: Colors.black,
             ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
-                foregroundColor: Colors.black, // Colore dei bottoni "OK" e "ANNULLA"
+                foregroundColor: Colors.black,
               ),
             ),
           ),
@@ -56,20 +54,17 @@ class _NewCostState extends State<NewCost> {
       },
     );
 
-    // Se l'utente ha scelto una data (e non ha cliccato "Annulla")
     if (dataSelezionata != null) {
-      // Formattiamo la data in gg/mm/aaaa aggiungendo lo zero se necessario
       String giorno = dataSelezionata.day.toString().padLeft(2, '0');
       String mese = dataSelezionata.month.toString().padLeft(2, '0');
       String anno = dataSelezionata.year.toString();
-      
-      // Aggiorniamo il controller del testo
+
       setState(() {
         _dataController.text = "$giorno/$mese/$anno";
       });
     }
   }
-  // --- LOGICA CONTROLLO DATA ---
+
   void _validaData(String valore) {
     if (valore.isEmpty) {
       return;
@@ -100,14 +95,13 @@ class _NewCostState extends State<NewCost> {
     if (giorno < 1 || giorno > maxGiorni) {
       return;
     }
-
   }
 
   Future<void> _selezionaOra(BuildContext context) async {
     final TimeOfDay? ora = await showTimePicker(context: context, initialTime: TimeOfDay.now());
     if (ora != null) setState(() => _oraController.text = "${ora.hour.toString().padLeft(2, '0')}:${ora.minute.toString().padLeft(2, '0')}");
   }
-  // --- LOGICA CONTROLLO ORA ---
+
   void _validaOra(String valore) {
     if (valore.isEmpty) {
       setState(() => _erroreOra = null);
@@ -135,35 +129,28 @@ class _NewCostState extends State<NewCost> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Riceviamo il viaggio come argomento
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is Trip) {
       setState(() {
         _viaggioSelezionato = args;
-        _viaggioAssociatoController.text = args.titolo; // Imposta il nome del viaggio
+        _viaggioAssociatoController.text = args.titolo;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // 1. SFONDO DI TUTTA LA PAGINA GIALLO
     return Scaffold(
       backgroundColor: Colors.amber,
-
-      // 2. NUOVA BARRA SUPERIORE INTEGRATA
       appBar: AppBar(
         backgroundColor: Colors.amber,
         elevation: 0,
-        
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black, size: 30),
           onPressed: () {
-            // Logica per tornare indietro
             Navigator.pop(context);
           },
         ),
-        
         centerTitle: true,
         title: const Text(
           'NUOVA SPESA',
@@ -174,16 +161,15 @@ class _NewCostState extends State<NewCost> {
           ),
         ),
       ),
-
-      // 3. CORPO CENTRALE ADATTATO A TUTTO SCHERMO
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
-          child: Column(
+          child: Form(
+            key: _formKey,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              
-              // 1. STATO
+
               Row(
                 children: [
                   const Text('STATO: ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
@@ -199,6 +185,7 @@ class _NewCostState extends State<NewCost> {
                         focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
                       ),
                       hint: const Text('. . .'),
+                      validator: (valore) => valore == null ? 'Obbligatorio' : null,
                       items: [
                         DropdownMenuItem(
                           value: 'Da pagare',
@@ -218,20 +205,29 @@ class _NewCostState extends State<NewCost> {
               ),
               const SizedBox(height: 15),
 
-              // 2. DATA (GG/MM/AAAA)
               const Text('DATA', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
               const SizedBox(height: 5),
-              TextField(
+              TextFormField(
                 controller: _dataController,
-                keyboardType: TextInputType.datetime, // Mostra tastiera con numeri e simboli
+                keyboardType: TextInputType.datetime,
+                validator: (valore) {
+                  if (valore == null || valore.trim().isEmpty) {
+                    return 'Seleziona la data della spesa';
+                  }
+                  if (!RegExp(r'^\d{2}/\d{2}/\d{4}$').hasMatch(valore.trim())) {
+                    return 'Data non valida (gg/mm/aaaa)';
+                  }
+                  return null;
+                },
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.white,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                   enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 2), borderRadius: BorderRadius.zero),
                   focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
+                  errorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red, width: 2), borderRadius: BorderRadius.zero),
+                  focusedErrorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red, width: 3), borderRadius: BorderRadius.zero),
                   hintText: "gg/mm/aaaa",
-                  // Ecco l'icona magica che apre il calendario
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.calendar_month, color: Colors.black),
                     onPressed: () => _selezionaData(context),
@@ -240,10 +236,9 @@ class _NewCostState extends State<NewCost> {
               ),
               const SizedBox(height: 20),
 
-              // 3. ORA (HH:MM)
               const Text('ORA', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
               TextField(
-                controller: _oraController, // Assicurati di dichiarare questo controller
+                controller: _oraController,
                 readOnly: true,
                 onTap: () => _selezionaOra(context),
                 decoration: InputDecoration(
@@ -260,22 +255,28 @@ class _NewCostState extends State<NewCost> {
               ),
               const SizedBox(height: 20),
 
-              // 4. TITOLO
               const Text('TITOLO', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
               const SizedBox(height: 5),
-              TextField(
+              TextFormField(
                 controller: _titoloController,
+                validator: (valore) {
+                  if (valore == null || valore.trim().isEmpty) {
+                    return 'Inserisci un titolo';
+                  }
+                  return null;
+                },
                 decoration: const InputDecoration(
                   filled: true,
                   fillColor: Colors.white,
                   contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                   enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 2), borderRadius: BorderRadius.zero),
                   focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
+                  errorBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.red, width: 2), borderRadius: BorderRadius.zero),
+                  focusedErrorBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.red, width: 3), borderRadius: BorderRadius.zero),
                 ),
               ),
               const SizedBox(height: 20),
 
-              // 5. DESCRIZIONE
               const Text('DESCRIZIONE:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
               const SizedBox(height: 5),
               TextField(
@@ -291,7 +292,6 @@ class _NewCostState extends State<NewCost> {
               ),
               const SizedBox(height: 20),
 
-              // 6. METODO PAGAMENTO
               Row(
                 children: [
                   const Text('METODO\nPAGAMENTO: ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
@@ -307,6 +307,7 @@ class _NewCostState extends State<NewCost> {
                         focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
                       ),
                       hint: const Text('. . .'),
+                      validator: (valore) => valore == null ? 'Obbligatorio' : null,
                       items: const [
                         DropdownMenuItem(value: 'Contanti', child: Text('Contanti')),
                         DropdownMenuItem(value: 'Carta di credito', child: Text('Carta di credito')),
@@ -321,7 +322,6 @@ class _NewCostState extends State<NewCost> {
               ),
               const SizedBox(height: 20),
 
-              //CATEGORIA
               Row(
                 children: [
                   const Text('CATEGORIA: ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
@@ -337,6 +337,7 @@ class _NewCostState extends State<NewCost> {
                         focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
                       ),
                       hint: const Text('. . .'),
+                      validator: (valore) => valore == null ? 'Obbligatorio' : null,
                       items: const [
                         DropdownMenuItem(value: 'Cibo e Bevande', child: Text('Cibo e Bevande')),
                         DropdownMenuItem(value: 'Trasporti', child: Text('Trasporti')),
@@ -353,22 +354,24 @@ class _NewCostState extends State<NewCost> {
               ),
               const SizedBox(height: 20),
 
-              // VIAGGIO ASSOCIATO
               const Text('VIAGGIO ASSOCIATO', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
               const SizedBox(height: 5),
               TextField(
                 controller: _viaggioAssociatoController,
+                readOnly: true,
+                enabled: false,
+                style: const TextStyle(color: Colors.black),
                 decoration: const InputDecoration(
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: Colors.white70,
                   contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                   enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 2), borderRadius: BorderRadius.zero),
+                  disabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 2), borderRadius: BorderRadius.zero),
                   focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
                 ),
               ),
               const SizedBox(height: 20),
 
-              // ATTIVITÀ ASSOCIATA
               const Text('ATTIVITÀ ASSOCIATA', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
               const SizedBox(height: 5),
               TextField(
@@ -383,7 +386,6 @@ class _NewCostState extends State<NewCost> {
               ),
               const SizedBox(height: 20),
 
-              // 7. COSTO
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -392,18 +394,30 @@ class _NewCostState extends State<NewCost> {
                     child: Text('COSTO ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
                   ),
                   Expanded(
-                    child: TextField(
+                    child: TextFormField(
                       controller: _costoController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
                       ],
+                      validator: (valore) {
+                        if (valore == null || valore.trim().isEmpty) {
+                          return 'Inserisci il costo';
+                        }
+                        final numero = double.tryParse(valore.replaceAll(',', '.'));
+                        if (numero == null || numero <= 0) {
+                          return 'Costo non valido';
+                        }
+                        return null;
+                      },
                       decoration: const InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
                         contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                         enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 2), borderRadius: BorderRadius.zero),
                         focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
+                        errorBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.red, width: 2), borderRadius: BorderRadius.zero),
+                        focusedErrorBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.red, width: 3), borderRadius: BorderRadius.zero),
                       ),
                     ),
                   ),
@@ -434,22 +448,37 @@ class _NewCostState extends State<NewCost> {
               ),
               const SizedBox(height: 40),
 
-              // 8. BOTTONE CONFERMA
               Center(
                 child: ElevatedButton(
                   onPressed: () {
-                    // Logica di salvataggio
+                    final formValido = _formKey.currentState!.validate();
+                    final erroreDropdown = _statoSelezionato == null ||
+                        _metodoPagamento == null ||
+                        _categoriaSelezionata == null;
+
+                    if (!formValido || erroreDropdown) {
+                      setState(() {});
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Compila tutti i campi obbligatori prima di confermare'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
                     final nuovaSpesa = Expense(
-                      id: DateTime.now().toString(), // ID univoco
-                      titolo: _titoloController.text.isEmpty ? 'Nuova Spesa' : _titoloController.text,
-                      importo: double.tryParse(_costoController.text.replaceAll(',', '.')) ?? 0.0,
-                      stato: _statoSelezionato ?? 'Da pagare',
-                      data: _dataController.text,
+                      id: DateTime.now().toString(),
+                      titolo: _titoloController.text.trim(),
+                      importo: double.parse(_costoController.text.replaceAll(',', '.')),
+                      stato: _statoSelezionato!,
+                      data: _dataController.text.trim(),
                       descrizione: _descrizioneController.text,
-                      metodoPagamento: _metodoPagamento ?? 'Contanti',
-                      categoria: _categoriaSelezionata ?? 'Altro',
+                      metodoPagamento: _metodoPagamento!,
+                      categoria: _categoriaSelezionata!,
                       viaggioAssociato: _viaggioAssociatoController.text.isEmpty ? 'Nessuno' : _viaggioAssociatoController.text,
                       attivitaAssociata: _attivitaAssociataController.text.isEmpty ? 'Nessuna' : _attivitaAssociataController.text,
+                      valuta: _valutaSelezionata,
                     );
                     Navigator.pop(context, nuovaSpesa);
                   },
@@ -464,16 +493,14 @@ class _NewCostState extends State<NewCost> {
                   child: const Text('CONFERMA', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
               ),
-              
+
               const SizedBox(height: 20),
             ],
+            ),
           ),
         ),
       ),
-
-      // 4. RICHIAMO DELLA TUA BOTTOM BAR
       bottomNavigationBar: const CustomBottomNavBar(),
     );
   }
-
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:travel_app_02/models/stay.dart';
 import 'package:travel_app_02/controllers/stay_controller.dart';
+import 'EditStayField.dart';
 import 'BottomBar.dart';
 
 class RecapStay extends StatelessWidget {
@@ -55,6 +56,58 @@ class RecapStay extends StatelessWidget {
     );
   }
 
+  void _mostraMenuModificaTappa(BuildContext context, Stay tappa) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('Titolo'),
+              onTap: () => _apriModificaCampo(context, tappa, 'titolo', 'Titolo'),
+            ),
+            ListTile(
+              title: const Text('Data'),
+              onTap: () => _apriModificaCampo(context, tappa, 'data', 'Data'),
+            ),
+            ListTile(
+              title: const Text('Ora'),
+              onTap: () => _apriModificaCampo(context, tappa, 'ora', 'Ora'),
+            ),
+            ListTile(
+              title: const Text('Descrizione'),
+              onTap: () => _apriModificaCampo(context, tappa, 'descrizione', 'Descrizione'),
+            ),
+            ListTile(
+              title: const Text('Costo Previsto'),
+              onTap: () => _apriModificaCampo(context, tappa, 'costoPrevisto', 'Costo Previsto'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _apriModificaCampo(BuildContext context, Stay tappa, String campo, String label) async {
+    Navigator.pop(context); // chiude il menu a tendina
+
+    final salvato = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const EditStayField(),
+        settings: RouteSettings(arguments: {'tappa': tappa, 'campo': campo, 'label': label}),
+      ),
+    );
+
+    // Come per l'eliminazione: torniamo al Riepilogo Viaggio, che ricarica
+    // le tappe fresche dal DB (i campi di Stay sono immutabili "final",
+    // quindi non possiamo aggiornarli qui in memoria).
+    if (salvato == true && context.mounted) {
+      Navigator.pop(context, true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final tappaPassata = ModalRoute.of(context)!.settings.arguments as Stay;
@@ -80,7 +133,7 @@ class RecapStay extends StatelessWidget {
               if (valore == 'elimina') {
                 _mostraConfermaEliminazione(context, tappaPassata);
               } else if (valore == 'modifica') {
-                // TODO: Navigator.pushNamed(context, AppRoutes.newStage, arguments: tappaPassata);
+                _mostraMenuModificaTappa(context, tappaPassata);
               }
             },
             itemBuilder: (context) => const [

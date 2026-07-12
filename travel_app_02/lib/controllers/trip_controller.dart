@@ -73,4 +73,26 @@ class TripController {
     return mappe.map((mappa) => Trip.fromMap(mappa)).toList();
   }
   
+  // Elimina un viaggio dal DB (tappe/spese/checklist/packlist collegate
+  // se ne vanno da sole grazie a ON DELETE CASCADE)
+  Future<void> eliminaViaggio(String idViaggio) async {
+    await DatabaseHelper.instance.delete(
+      'viaggi',
+      where: 'id = ?',
+      whereArgs: [idViaggio],
+    );
+  }
+
+  // Aggiorna un singolo campo di un viaggio (usato dalla schermata di modifica)
+  // 'colonna' deve essere il nome della colonna nel DB
+  // (es. 'titolo', 'luogo', 'dataInizio', 'dataFine', 'budgetPrevisto')
+  Future<void> aggiornaCampoViaggio(String idViaggio, String colonna, dynamic valore) async {
+    await DatabaseHelper.instance.update(
+      'viaggi',
+      {colonna: valore},
+      where: 'id = ?',
+      whereArgs: [idViaggio],
+    );
+  }
+  
 }

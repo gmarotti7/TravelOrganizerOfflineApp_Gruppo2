@@ -1,50 +1,112 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import 'package:travel_app_02/controllers/rec_trip_controller.dart';
 import 'package:travel_app_02/controllers/stay_controller.dart';
+import 'package:travel_app_02/controllers/trip_controller.dart';
+import 'package:travel_app_02/controllers/checklist_controller.dart';
+import 'package:travel_app_02/controllers/pack_controller.dart';
+import 'package:travel_app_02/controllers/cost_controller.dart';
 import 'package:travel_app_02/models/expense.dart';
 import 'package:travel_app_02/models/stay.dart';
 import 'package:travel_app_02/models/trip.dart';
 import 'package:travel_app_02/route.dart';
 
 class RecapTrip extends StatefulWidget {
-  // Rimosso l'obbligo di ricevere il controller dall'esterno!
-  const RecapTrip({super.key});
+  final RecTripController controller;
+
+  const RecapTrip({
+    super.key,
+    required this.controller,
+  });
 
   @override
   State<RecapTrip> createState() => _RecapTripState();
 }
 
 class _RecapTripState extends State<RecapTrip> {
-  // Dichiariamo il controller interno
-  RecTripController? _controller;
-  
   final StayController _tappaController = StayController();
+  final ChecklistController _checklistController = ChecklistController();
+  final PackController _packController = PackController();
+  final CostController _costController = CostController();
+
   List<Stay> _tappe = [];
   bool _caricamentoTappe = true;
+  bool _caricamentoSpese = true;
+
+  Map<String, dynamic>? _checklist; // {id, titolo} oppure null se non esiste ancora
+  Map<String, dynamic>? _packlist;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Ripristiniamo la cattura automatica del viaggio dalla memoria
-    if (_controller == null) {
-      final trip = ModalRoute.of(context)!.settings.arguments as Trip;
-      _controller = RecTripController(trip: trip);
-      _caricaTappe();
+  void initState() {
+    super.initState();
+    _caricaTutto();
+  }
+
+  Future<void> _caricaTutto() async {
+    await Future.wait([
+      _caricaTappe(),
+      _caricaChecklist(),
+      _caricaPacklist(),
+      _caricaSpese(),
+    ]);
+  }
+
+  Future<void> _caricaSpese() async {
+    final idViaggio = int.tryParse(widget.controller.trip.id);
+    if (idViaggio == null) {
+      setState(() => _caricamentoSpese = false);
+      return;
+    }
+    try {
+      final speseDb = await _costController.caricaSpeseViaggio(idViaggio);
+      setState(() {
+        widget.controller.trip.spese = speseDb;
+        _caricamentoSpese = false;
+      });
+    } catch (e) {
+      setState(() => _caricamentoSpese = false);
+      _mostraErrore('Errore caricando le spese: $e');
     }
   }
 
   Future<void> _caricaTappe() async {
-    final idViaggio = int.tryParse(_controller!.trip.id);
+    final idViaggio = int.tryParse(widget.controller.trip.id);
     if (idViaggio == null) {
       setState(() => _caricamentoTappe = false);
       return;
     }
-    final tappeDb = await _tappaController.caricaTappeViaggio(idViaggio);
-    setState(() {
-      _tappe = tappeDb;
-      _caricamentoTappe = false;
-    });
+    try {
+      final tappeDb = await _tappaController.caricaTappeViaggio(idViaggio);
+      setState(() {
+        _tappe = tappeDb;
+        _caricamentoTappe = false;
+      });
+    } catch (e) {
+      setState(() => _caricamentoTappe = false);
+      _mostraErrore('Errore caricando le tappe: $e');
+    }
+  }
+
+  Future<void> _caricaChecklist() async {
+    final idViaggio = int.tryParse(widget.controller.trip.id);
+    if (idViaggio == null) return;
+    final risultato = await _checklistController.caricaChecklistViaggio(idViaggio);
+    if (mounted) setState(() => _checklist = risultato);
+  }
+
+  Future<void> _caricaPacklist() async {
+    final idViaggio = int.tryParse(widget.controller.trip.id);
+    if (idViaggio == null) return;
+    final risultato = await _packController.caricaPacklistViaggio(idViaggio);
+    if (mounted) setState(() => _packlist = risultato);
+  }
+
+  void _mostraErrore(String messaggio) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(messaggio), backgroundColor: Colors.red),
+    );
   }
 
   String _formatValuta(double importo) {
@@ -53,11 +115,8 @@ class _RecapTripState extends State<RecapTrip> {
 
   @override
   Widget build(BuildContext context) {
-    // Schermata di caricamento finché non aggancia i dati
-    if (_controller == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-
-    const Color gialloSfondo = Color(0xFFFFB84D);
-    final trip = _controller!.trip;
+    const Color gialloSfondo = Colors.amber;
+    final trip = widget.controller.trip;
 
     return Scaffold(
       backgroundColor: gialloSfondo,
@@ -75,7 +134,7 @@ class _RecapTripState extends State<RecapTrip> {
             height: 20,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: _controller!.statoViaggioColor,
+              color: widget.controller.statoViaggioColor,
               border: Border.all(color: Colors.black, width: 2),
             ),
           ),
@@ -86,7 +145,7 @@ class _RecapTripState extends State<RecapTrip> {
               if (valore == 'elimina') {
                 _mostraConfermaEliminazioneViaggio(context);
               } else if (valore == 'modifica') {
-                // TODO: Aggiungi navigazione modifica
+                _mostraMenuModificaViaggio(context);
               }
             },
             itemBuilder: (context) => const [
@@ -143,12 +202,15 @@ class _RecapTripState extends State<RecapTrip> {
                   else
                     ..._tappe.map(
                       (tappa) => InkWell(
-                        onTap: () {
-                          Navigator.pushNamed(
+                        onTap: () async {
+                          final aggiorna = await Navigator.pushNamed(
                             context,
                             AppRoutes.recapStay,
                             arguments: tappa,
                           );
+                          if (aggiorna == true) {
+                            _caricaTappe();
+                          }
                         },
                         child: Container(
                           width: double.infinity,
@@ -167,18 +229,29 @@ class _RecapTripState extends State<RecapTrip> {
                     ),
 
                   const SizedBox(height: 8),
-                  
+
+                  // PULSANTE AGGIUNGI TAPPA
                   OutlinedButton(
                     onPressed: () async {
-                      final risultato = await Navigator.pushNamed(context, AppRoutes.newStay);
-                      
+                      final risultato = await Navigator.pushNamed(
+                        context,
+                        AppRoutes.newStay,
+                        arguments: trip, // Serve a NewStay per limitare la data tra inizio e fine viaggio
+                      );
                       if (risultato != null && risultato is Stay) {
-                        final idViaggioInt = int.tryParse(trip.id);
-                        if (idViaggioInt != null) {
-                          final tappaSalvata = await _tappaController.salvaNuovaTappa(risultato, idViaggioInt);
+                        final idViaggio = int.tryParse(trip.id);
+                        if (idViaggio == null) {
+                          _mostraErrore('ID viaggio non valido, impossibile salvare la tappa.');
+                          return;
+                        }
+                        try {
+                          final tappaSalvata = await _tappaController.salvaNuovaTappa(risultato, idViaggio);
                           setState(() => _tappe.add(tappaSalvata));
-                        } else {
-                          setState(() => _tappe.add(risultato));
+                        } catch (e) {
+                          // Se vedi qui un errore "no such column" o "no such table",
+                          // devi disinstallare l'app dall'emulatore (il database salvato
+                          // è vecchio e non ha ancora lo schema aggiornato).
+                          _mostraErrore('Errore salvando la tappa: $e');
                         }
                       }
                     },
@@ -188,27 +261,46 @@ class _RecapTripState extends State<RecapTrip> {
                   const SizedBox(height: 16),
                   const Text("PACKLIST", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black54),
-                      borderRadius: BorderRadius.circular(6),
+
+                  InkWell(
+                    // La packlist si sceglie solo in fase di creazione del viaggio:
+                    // qui è consultabile solo se ne è stata scelta una allora.
+                    onTap: _packlist == null ? null : () => _apriPacklist(context, trip),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.black54),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        _packlist == null ? "Nessuna packlist selezionata" : "- ${_packlist!['titolo']}",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          color: _packlist == null ? Colors.black45 : Colors.black,
+                        ),
+                      ),
                     ),
-                    child: const Text("- Vedi Packlist", style: TextStyle(fontWeight: FontWeight.w500)),
                   ),
 
                   const SizedBox(height: 16),
                   const Text("CHECKLIST", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black54),
-                      borderRadius: BorderRadius.circular(6),
+
+                  InkWell(
+                    onTap: () => _apriChecklist(context, trip),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.black54),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        _checklist == null ? "+ Crea Checklist" : "- ${_checklist!['titolo']}",
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
                     ),
-                    child: const Text("- Vedi Checklist", style: TextStyle(fontWeight: FontWeight.w500)),
                   ),
 
                   const SizedBox(height: 20),
@@ -223,11 +315,11 @@ class _RecapTripState extends State<RecapTrip> {
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       Text(
-                        _formatValuta(_controller!.speseTotali),
+                        _formatValuta(widget.controller.speseTotali),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: _controller!.speseTotaliColor,
+                          color: widget.controller.speseTotaliColor,
                         ),
                       ),
                     ],
@@ -240,11 +332,22 @@ class _RecapTripState extends State<RecapTrip> {
 
             ElevatedButton(
               onPressed: () async {
-                final nuovaSpesa = await Navigator.pushNamed(context, AppRoutes.newCost, arguments: _controller!.trip);
+                final nuovaSpesa = await Navigator.pushNamed(context, AppRoutes.newCost, arguments: widget.controller.trip);
                 if (nuovaSpesa != null && nuovaSpesa is Expense) {
-                  setState(() {
-                    _controller!.aggiungiSpesa(nuovaSpesa);
-                  });
+                  final idViaggio = int.tryParse(trip.id);
+                  if (idViaggio == null) {
+                    _mostraErrore('ID viaggio non valido, impossibile salvare la spesa.');
+                    return;
+                  }
+                  try {
+                    await _costController.salvaSpesa(nuovaSpesa, idViaggio);
+                    await _caricaSpese();
+                  } catch (e) {
+                    // Se vedi qui un errore "no such column", devi disinstallare l'app
+                    // dall'emulatore (il database salvato è vecchio e non ha ancora
+                    // le nuove colonne di 'spese': stato, descrizione, metodoPagamento, ecc.)
+                    _mostraErrore('Errore salvando la spesa: $e');
+                  }
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -266,6 +369,7 @@ class _RecapTripState extends State<RecapTrip> {
 
             const SizedBox(height: 16),
 
+            // LISTA SPESE
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -278,33 +382,47 @@ class _RecapTripState extends State<RecapTrip> {
                 children: [
                   const Text("LISTA SPESE:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
-                  ...trip.spese.map(
-                    (spesa) => InkWell(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          AppRoutes.recapCost,
-                          arguments: spesa,
-                        );
-                      },
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                        margin: const EdgeInsets.only(bottom: 6),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.black54),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("- ${spesa.titolo}", style: const TextStyle(fontWeight: FontWeight.w500)),
-                            Text(_formatValuta(spesa.importo), style: const TextStyle(fontWeight: FontWeight.bold)),
-                          ],
+                  if (_caricamentoSpese)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: CircularProgressIndicator(),
+                    )
+                  else if (trip.spese.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Text("Nessuna spesa ancora aggiunta"),
+                    )
+                  else
+                    ...trip.spese.map(
+                      (spesa) => InkWell(
+                        onTap: () async {
+                          final aggiorna = await Navigator.pushNamed(
+                            context,
+                            AppRoutes.recapCost,
+                            arguments: spesa,
+                          );
+                          if (aggiorna == true) {
+                            _caricaSpese();
+                          }
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                          margin: const EdgeInsets.only(bottom: 6),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black54),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text("- ${spesa.titolo}", style: const TextStyle(fontWeight: FontWeight.w500)),
+                              Text(_formatValuta(spesa.importo), style: const TextStyle(fontWeight: FontWeight.bold)),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -327,8 +445,58 @@ class _RecapTripState extends State<RecapTrip> {
     );
   }
 
+  // ---------- PACKLIST / CHECKLIST ----------
+
+  Future<void> _apriPacklist(BuildContext context, Trip trip) async {
+    final idViaggio = int.tryParse(trip.id);
+    final packlist = _packlist;
+    if (idViaggio == null || packlist == null) return;
+
+    final risultato = await Navigator.pushNamed(
+      context,
+      AppRoutes.recapPacklist,
+      arguments: {'id': packlist['id'], 'titolo': packlist['titolo']},
+    );
+    if (risultato == true) {
+      _caricaPacklist(); // è stata eliminata, ricarichiamo (tornerà a "Nessuna packlist selezionata")
+    }
+  }
+
+  Future<void> _apriChecklist(BuildContext context, Trip trip) async {
+    final idViaggio = int.tryParse(trip.id);
+    if (idViaggio == null) return;
+
+    if (_checklist == null) {
+      final risultato = await Navigator.pushNamed(context, AppRoutes.addCheck);
+      if (risultato != null && risultato is Map) {
+        try {
+          await _checklistController.salvaChecklist(
+            risultato['titolo'] as String,
+            List<Map<String, dynamic>>.from(risultato['elementi'] as List),
+            idViaggio,
+          );
+          await _caricaChecklist();
+        } catch (e) {
+          _mostraErrore('Errore salvando la checklist: $e');
+        }
+      }
+    } else {
+      final risultato = await Navigator.pushNamed(
+        context,
+        AppRoutes.recapChecklist,
+        arguments: {'id': _checklist!['id'], 'titolo': _checklist!['titolo']},
+      );
+      if (risultato == true) {
+        _caricaChecklist();
+      }
+    }
+  }
+
+  // ---------- ELIMINA / MODIFICA VIAGGIO ----------
+
+  // Sostituisci il metodo _mostraConfermaEliminazioneViaggio con questo:
   void _mostraConfermaEliminazioneViaggio(BuildContext context) {
-    final trip = _controller!.trip;
+    final trip = widget.controller.trip;
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -336,9 +504,12 @@ class _RecapTripState extends State<RecapTrip> {
         content: Text('Sei sicuro di voler eliminare il viaggio "${trip.titolo}"?'),
         actions: [
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(dialogContext);
-              Navigator.pop(context);
+              await TripController().eliminaViaggio(trip.id);
+              if (context.mounted) {
+                Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (route) => false);
+              }
             },
             child: const Text('SÌ'),
           ),
@@ -349,5 +520,72 @@ class _RecapTripState extends State<RecapTrip> {
         ],
       ),
     );
+  }
+
+  // Menu a tendina: quale campo del viaggio vuoi modificare
+  void _mostraMenuModificaViaggio(BuildContext context) {
+    final trip = widget.controller.trip;
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('Titolo'),
+              onTap: () => _apriModificaCampo(context, trip, 'titolo', 'Titolo'),
+            ),
+            ListTile(
+              title: const Text('Luogo'),
+              onTap: () => _apriModificaCampo(context, trip, 'luogo', 'Luogo'),
+            ),
+            ListTile(
+              title: const Text('Data Inizio'),
+              onTap: () => _apriModificaCampo(context, trip, 'dataInizio', 'Data Inizio'),
+            ),
+            ListTile(
+              title: const Text('Data Fine'),
+              onTap: () => _apriModificaCampo(context, trip, 'dataFine', 'Data Fine'),
+            ),
+            ListTile(
+              title: const Text('Budget Previsto'),
+              onTap: () => _apriModificaCampo(context, trip, 'budgetPrevisto', 'Budget Previsto'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _apriModificaCampo(BuildContext context, Trip trip, String campo, String label) async {
+    Navigator.pop(context); // chiude il menu a tendina
+
+    final risultato = await Navigator.pushNamed(
+      context,
+      AppRoutes.editTripField,
+      arguments: {'trip': trip, 'campo': campo, 'label': label},
+    );
+
+    if (risultato != null && risultato is Map) {
+      setState(() {
+        switch (risultato['campo']) {
+          case 'titolo':
+            trip.titolo = risultato['valore'];
+            break;
+          case 'luogo':
+            trip.luogo = risultato['valore'];
+            break;
+          case 'dataInizio':
+            trip.dataInizio = risultato['valore'];
+            break;
+          case 'dataFine':
+            trip.dataFine = risultato['valore'];
+            break;
+          case 'budgetPrevisto':
+            trip.budgetPrevisto = risultato['valore'];
+            break;
+        }
+      });
+    }
   }
 }

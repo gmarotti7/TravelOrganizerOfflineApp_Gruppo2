@@ -1,10 +1,14 @@
 // lib/views/home_page.dart
 import 'package:flutter/material.dart';
+import 'package:travel_app_02/controllers/checklist_controller.dart';
 import 'package:travel_app_02/route.dart';
 import 'BottomBar.dart';
 import 'package:travel_app_02/models/trip.dart';
 import 'package:travel_app_02/sessione.dart';
 import 'package:travel_app_02/controllers/trip_controller.dart';
+import 'package:travel_app_02/controllers/pack_controller.dart';
+import 'package:travel_app_02/controllers/stay_controller.dart';
+import 'package:travel_app_02/models/stay.dart';
 
 class HomePage extends StatefulWidget{
   const HomePage({super.key});
@@ -16,7 +20,7 @@ class HomePage extends StatefulWidget{
 class _HomePageState extends State<HomePage> {
   // Controller per la barra di ricerca
   final _searchController = TextEditingController();
-  
+
   // Data selezionata tramite il calendario (null se nessun filtro data è attivo)
   DateTime? _selectedDate;
 
@@ -35,17 +39,38 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _caricaDatiDalDatabase();
+  // Inizializza subito la lista filtrata con i dati mock di default
+    _viaggiFiltrati = List.from(_tuttiIViaggi);
+
+  // Aspetta che l'interfaccia sia pronta prima di caricare dal Database
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _caricaDatiDalDatabase();
+    });
   }
 
   Future<void> _caricaDatiDalDatabase() async {
     if (Sessione.idUtenteAttuale != null) {
-      final viaggiDb = await _controller.caricaViaggiUtente(Sessione.idUtenteAttuale!);
-      setState(() {
-        _tuttiIViaggi.clear();
-        _tuttiIViaggi.addAll(viaggiDb);
-        _viaggiFiltrati = List.from(_tuttiIViaggi);
-      });
+      try {
+        final viaggiDb = await _controller.caricaViaggiUtente(Sessione.idUtenteAttuale!);
+      
+        if (!mounted) return;
+
+        setState(() {
+          _tuttiIViaggi.clear();
+          _tuttiIViaggi.addAll(viaggiDb);
+          _viaggiFiltrati = List.from(_tuttiIViaggi);
+        });
+      } catch (e) {
+        debugPrint("Errore caricamento DB: $e");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Errore caricamento dati: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -66,7 +91,7 @@ class _HomePageState extends State<HomePage> {
         String statoViaggio = viaggio.dataInizio.isAfter(oggi) ? 'da fare' : 'passato';
 
         // 1. Controllo Filtro Testuale
-        bool matchTesto = viaggio.luogo.toLowerCase().contains(query) || 
+        bool matchTesto = viaggio.luogo.toLowerCase().contains(query) ||
                           statoViaggio.contains(query) ||
                           viaggio.titolo.toLowerCase().contains(query);
 
@@ -148,7 +173,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 20),
 
               // 2. BARRA DI RICERCA CON LENTE E CALENDARIO
@@ -286,24 +311,40 @@ class _HomePageState extends State<HomePage> {
   Widget _buildBottoneNuovoViaggio() {
     return InkWell(
       onTap: () async {
-      final risultato = await Navigator.pushNamed(context, AppRoutes.addTrip);
+        final risultato = await Navigator.pushNamed(context, AppRoutes.addTrip);
 
-      if (risultato != null && risultato is Map) {
-        
-        int idUtenteSicuro = Sessione.idUtenteAttuale ?? 1;
+        if (risultato != null && risultato is Map<String, dynamic>) {
+          final nuovoViaggio = risultato['viaggio'] as Trip;
+          final int idUtente = Sessione.idUtenteAttuale ?? 1;
 
-          Trip nuovo = Trip(
-            titolo: risultato['titolo'],
-            luogo: risultato['luogo'],
-            dataInizio: risultato['dataInizio'],
-            dataFine: risultato['dataFine'], 
-            id: '0', 
-            budgetPrevisto: risultato['budgetPrevisto'],
-          );
-          
           try {
-            Trip salvato = await _controller.salvaNuovoViaggio(nuovo, idUtenteSicuro);
-            
+            final salvato = await TripController().salvaNuovoViaggio(nuovoViaggio, idUtente);
+
+            if (risultato.containsKey('tappe')) {
+              final tappeScelte = risultato['tappe'] as List;
+              for (final tappa in tappeScelte) {
+                if (tappa is Stay) {
+                  await StayController().salvaNuovaTappa(tappa, int.parse(salvato.id));
+                }
+              }
+            }
+
+            if (risultato['packlist'] != null && risultato['packlistItems'] != null) {
+              await PackController().salvaPacklist(
+                risultato['packlist'],
+                risultato['packlistItems'],
+                int.parse(salvato.id),
+              );
+            }
+
+            if (risultato['checklist'] != null && risultato['checklistItems'] != null) {
+              await ChecklistController().salvaChecklist(
+                risultato['checklist'],
+                risultato['checklistItems'],
+                int.parse(salvato.id),
+              );
+            }
+
             setState(() {
               _tuttiIViaggi.add(salvato);
               _applicaFiltri();
@@ -312,9 +353,8 @@ class _HomePageState extends State<HomePage> {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Errore di salvataggio. Hai fatto il login correttamente? ($e)'),
+                  content: Text('Errore di salvataggio: $e'),
                   backgroundColor: Colors.red,
-                  duration: const Duration(seconds: 4),
                 ),
               );
             }

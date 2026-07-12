@@ -1,9 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:travel_app_02/models/expense.dart';
+import 'package:travel_app_02/controllers/cost_controller.dart';
+import 'EditCostField.dart';
 import 'BottomBar.dart';
 
-class RecapCost extends StatelessWidget {
+class RecapCost extends StatefulWidget {
   const RecapCost({Key? key}) : super(key: key);
+
+  @override
+  State<RecapCost> createState() => _RecapCostState();
+}
+
+class _RecapCostState extends State<RecapCost> {
+  final CostController _costController = CostController();
+  Expense? _spesa;
+  bool _inizializzato = false;
+  bool _modificato = false; // true se qualcosa è stato modificato/eliminato: serve a dire al chiamante di ricaricare
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_inizializzato) {
+      _spesa = ModalRoute.of(context)!.settings.arguments as Expense;
+      _inizializzato = true;
+    }
+  }
 
   Widget _buildRecapItem(String label, String placeholderValue) {
     return Padding(
@@ -13,19 +34,12 @@ class RecapCost extends StatelessWidget {
         children: [
           Text(
             '$label: ',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
           ),
           Expanded(
             child: Text(
               placeholderValue,
-              style: const TextStyle(
-                fontSize: 18,
-                color: Colors.black87,
-              ),
+              style: const TextStyle(fontSize: 18, color: Colors.black87),
             ),
           ),
         ],
@@ -33,92 +47,152 @@ class RecapCost extends StatelessWidget {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final spesaPassata = ModalRoute.of(context)!.settings.arguments as Expense;
-    return Scaffold(
-      backgroundColor: Colors.amber, 
-
-      // --- NUOVA BARRA SUPERIORE (Senza "Riepilogo Spesa") ---
-      appBar: AppBar(
-        backgroundColor: Colors.amber,
-        elevation: 0, 
-        
-        // 1. FRECCIA INDIETRO A SINISTRA
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black, size: 30),
-          onPressed: () {
-            // Logica per tornare indietro
-            Navigator.pop(context);
-          },
-        ),
-        
-        // 2. TITOLO AL CENTRO
-        centerTitle: true,
-        title: const Text(
-          'RIEPILOGO',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-            fontSize: 24,
-          ),
-        ),
-        
-        // 3. MENU AD HAMBURGER A DESTRA
+  void _mostraConfermaEliminazione(Expense spesa) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('CONFERMA ELIMINAZIONE SPESA'),
+        content: Text('Sei sicuro di voler eliminare la spesa "${spesa.titolo}"?'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.menu, color: Colors.black, size: 30),
-            onPressed: () {
-              // Logica per il menu laterale
+          TextButton(
+            onPressed: () async {
+              await CostController().eliminaSpesa(spesa.id);
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+              if (context.mounted) Navigator.pop(context, true);
             },
+            child: const Text('SÌ'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('NO'),
           ),
         ],
       ),
+    );
+  }
 
-      // --- CORPO CENTRALE DELLA PAGINA ---
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
+  void _mostraMenuModifica(Expense spesa) {
+    showModalBottomSheet(
+      context: context,
+      builder: (bottomSheetContext) => SafeArea(
+        child: SingleChildScrollView(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // La riga con la freccia e il menu è stata spostata nell'AppBar!
-              // Iniziamo direttamente con i dati:
-              _buildRecapItem('TITOLO', spesaPassata.titolo),
-              _buildRecapItem('IMPORTO', '${spesaPassata.importo.toStringAsFixed(2)} EUR'),
-              _buildRecapItem('STATO', spesaPassata.stato ?? 'Non specificato'),
-              _buildRecapItem('DATA', spesaPassata.data ?? 'Non specificata'),
-              _buildRecapItem('METODO DI PAGAMENTO', spesaPassata.metodoPagamento ?? 'Non specificato'),
-              _buildRecapItem('CATEGORIA', spesaPassata.categoria ?? 'Non Specificato'),
-              _buildRecapItem('VIAGGIO ASSOCIATO', spesaPassata.viaggioAssociato ?? 'Non specificato'),
-              _buildRecapItem('ATTIVITÀ ASSOCIATA', spesaPassata.attivitaAssociata ?? 'Non specificata'),
- 
-              const SizedBox(height: 10),
-              const Text(
-                'NOTE:',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 5),
-              const Text(
-                'Diviso il conto in due. Ottimo servizio, da consigliare.',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.black87,
-                ),
-              ),
-              
-              const SizedBox(height: 40), 
+              ListTile(title: const Text('Titolo'), onTap: () { Navigator.pop(bottomSheetContext); _apriModificaCampo(spesa, 'titolo', 'Titolo'); }),
+              ListTile(title: const Text('Importo'), onTap: () { Navigator.pop(bottomSheetContext); _apriModificaCampo(spesa, 'importo', 'Importo'); }),
+              ListTile(title: const Text('Stato'), onTap: () { Navigator.pop(bottomSheetContext); _apriModificaCampo(spesa, 'stato', 'Stato'); }),
+              ListTile(title: const Text('Data'), onTap: () { Navigator.pop(bottomSheetContext); _apriModificaCampo(spesa, 'data', 'Data'); }),
+              ListTile(title: const Text('Metodo Pagamento'), onTap: () { Navigator.pop(bottomSheetContext); _apriModificaCampo(spesa, 'metodoPagamento', 'Metodo Pagamento'); }),
+              ListTile(title: const Text('Categoria'), onTap: () { Navigator.pop(bottomSheetContext); _apriModificaCampo(spesa, 'categoria', 'Categoria'); }),
+              ListTile(title: const Text('Attività Associata'), onTap: () { Navigator.pop(bottomSheetContext); _apriModificaCampo(spesa, 'attivitaAssociata', 'Attività Associata'); }),
+              ListTile(title: const Text('Nota'), onTap: () { Navigator.pop(bottomSheetContext); _apriModificaCampo(spesa, 'descrizione', 'Nota'); }),
+              ListTile(title: const Text('Valuta'), onTap: () { Navigator.pop(bottomSheetContext); _apriModificaCampo(spesa, 'valuta', 'Valuta'); }),
             ],
           ),
         ),
       ),
+    );
+  }
 
-      // --- BARRA DI NAVIGAZIONE INFERIORE INDIPENDENTE ---
-      bottomNavigationBar: const CustomBottomNavBar(),
+  // NOTA: usiamo sempre il context della pagina RecapCost (State.context), che resta valido
+  // per tutta la durata dell'operazione, invece del context (transitorio) del bottom sheet
+  // che veniva chiuso poco prima: quello risultava già "smontato" al termine del salvataggio
+  // e impediva l'aggiornamento della pagina.
+  Future<void> _apriModificaCampo(Expense spesa, String campo, String label) async {
+    final salvato = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const EditCostField(),
+        settings: RouteSettings(arguments: {'spesa': spesa, 'campo': campo, 'label': label}),
+      ),
+    );
+
+    if (salvato == true) {
+      // Ricarichiamo la spesa aggiornata dal database e la mostriamo subito,
+      // senza dover uscire e rientrare nella pagina di riepilogo.
+      final spesaAggiornata = await _costController.caricaSpesa(spesa.id);
+      if (mounted && spesaAggiornata != null) {
+        setState(() {
+          _spesa = spesaAggiornata;
+          _modificato = true;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final spesaPassata = _spesa!;
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          Navigator.pop(context, _modificato);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.amber,
+        appBar: AppBar(
+          backgroundColor: Colors.amber,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black, size: 30),
+            onPressed: () => Navigator.pop(context, _modificato),
+          ),
+          centerTitle: true,
+          title: const Text(
+            'RIEPILOGO',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 24),
+          ),
+          actions: [
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.menu, color: Colors.black, size: 30),
+              onSelected: (valore) {
+                if (valore == 'elimina') {
+                  _mostraConfermaEliminazione(spesaPassata);
+                } else if (valore == 'modifica') {
+                  _mostraMenuModifica(spesaPassata);
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(value: 'modifica', child: Text('MODIFICA SPESA')),
+                PopupMenuItem(value: 'elimina', child: Text('ELIMINA SPESA')),
+              ],
+            ),
+          ],
+        ),
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildRecapItem('TITOLO', spesaPassata.titolo),
+                _buildRecapItem('IMPORTO', '${spesaPassata.importo.toStringAsFixed(2)} ${spesaPassata.valuta ?? 'EUR'}'),
+                _buildRecapItem('STATO', spesaPassata.stato ?? 'Non specificato'),
+                _buildRecapItem('DATA', spesaPassata.data ?? 'Non specificata'),
+                _buildRecapItem('METODO DI PAGAMENTO', spesaPassata.metodoPagamento ?? 'Non specificato'),
+                _buildRecapItem('CATEGORIA', spesaPassata.categoria ?? 'Non Specificato'),
+                _buildRecapItem('VIAGGIO ASSOCIATO', spesaPassata.viaggioAssociato ?? 'Non specificato'),
+                _buildRecapItem('ATTIVITÀ ASSOCIATA', spesaPassata.attivitaAssociata ?? 'Non specificata'),
+                const SizedBox(height: 10),
+                const Text(
+                  'NOTE:',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  spesaPassata.descrizione?.isNotEmpty == true ? spesaPassata.descrizione! : 'Nessuna nota',
+                  style: const TextStyle(fontSize: 18, color: Colors.black87),
+                ),
+                const SizedBox(height: 40),
+              ],
+            ),
+          ),
+        ),
+        bottomNavigationBar: const CustomBottomNavBar(),
+      ),
     );
   }
 }

@@ -2,7 +2,10 @@
 import 'package:flutter/material.dart';
 
 class AddCheck extends StatefulWidget {
-  const AddCheck({super.key});
+  // MODIFICA: Aggiunto parametro per ricevere i dati da modificare
+  final Map<String, dynamic>? checklistIniziale;
+
+  const AddCheck({super.key, this.checklistIniziale});
 
   @override
   State<AddCheck> createState() => _AddCheckState();
@@ -14,6 +17,24 @@ class _AddCheckState extends State<AddCheck> {
 
   // Lista dinamica che conterrà gli elementi della checklist
   final List<Map<String, dynamic>> _elementiChecklist = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // MODIFICA: Se riceviamo dati in ingresso, li carichiamo nei campi
+    if (widget.checklistIniziale != null) {
+      _titleController.text = widget.checklistIniziale!['titolo'] ?? '';
+      
+      // Carichiamo la lista degli elementi se presente
+      if (widget.checklistIniziale!.containsKey('elementi')) {
+        setState(() {
+          _elementiChecklist.addAll(
+              List<Map<String, dynamic>>.from(widget.checklistIniziale!['elementi'])
+          );
+        });
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -30,14 +51,13 @@ class _AddCheckState extends State<AddCheck> {
     setState(() {
       _elementiChecklist.add({
         'nome': pulito,
-        'isChecked': false, // Di base l'elemento non è completato
+        'isChecked': false, 
       });
     });
 
-    _itemController.clear(); // Svuota la casella di testo
+    _itemController.clear();
   }
 
-  // Funzione di utilità per mantenere lo stile dei campi di testo neri coordinati
   InputDecoration _buildInputDecoration(String hintText) {
     return InputDecoration(
       hintText: hintText,
@@ -55,31 +75,28 @@ class _AddCheckState extends State<AddCheck> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromRGBO(225, 170, 5, 1), // Giallo ocra coordinato
+      backgroundColor: Colors.amber, // Stesso giallo usato in tutte le altre pagine
       body: SafeArea(
         child: Stack(
           children: [
-            // 1. FRECCIA IN ALTO A SINISTRA
             Positioned(
               top: 10,
               left: 10,
               child: IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.black, size: 30),
                 onPressed: () {
-                  Navigator.pop(context); // Torna indietro senza salvare
+                  Navigator.pop(context); 
                 },
               ),
             ),
 
-            // Contenuto Principale della pagina scorribile per evitare crash di spazio
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 40), // Spazio per la freccia
+                  const SizedBox(height: 40),
 
-                  // 2. SCRITTA "LA TUA CHECKLIST:"
                   const Text(
                     'LA TUA CHECKLIST:',
                     style: TextStyle(
@@ -92,7 +109,6 @@ class _AddCheckState extends State<AddCheck> {
                   
                   const SizedBox(height: 15),
 
-                  // 3. CASELLA DI TESTO TITOLO
                   TextField(
                     controller: _titleController,
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -102,7 +118,6 @@ class _AddCheckState extends State<AddCheck> {
 
                   const SizedBox(height: 35),
 
-                  // 4. SCRITTA "COSA VUOI AGGIUNGERE?"
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
@@ -118,18 +133,27 @@ class _AddCheckState extends State<AddCheck> {
 
                   const SizedBox(height: 10),
 
-                  // 5. CASELLA DI TESTO AGGIUNGI (Rileva l'invio sulla tastiera)
-                  TextField(
-                    controller: _itemController,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    cursorColor: Colors.white,
-                    decoration: _buildInputDecoration('AGGIUNGI'),
-                    onSubmitted: (value) => _aggiungiElemento(value), // Aggiunge premendo Invio
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _itemController,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          cursorColor: Colors.white,
+                          decoration: _buildInputDecoration('AGGIUNGI'),
+                          onSubmitted: (value) => _aggiungiElemento(value),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      IconButton(
+                        onPressed: () => _aggiungiElemento(_itemController.text),
+                        icon: const Icon(Icons.add_circle, color: Colors.black, size: 32),
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 25),
 
-                  // 6. AREA LISTA DEGLI ELEMENTI AGGIUNTI (Dinamica)
                   Expanded(
                     child: _elementiChecklist.isEmpty
                         ? const Center(
@@ -157,13 +181,13 @@ class _AddCheckState extends State<AddCheck> {
                                       fontWeight: FontWeight.bold,
                                       decoration: item['isChecked'] 
                                           ? TextDecoration.lineThrough 
-                                          : TextDecoration.none, // Barra il testo se completato
+                                          : TextDecoration.none,
                                     ),
                                   ),
                                   value: item['isChecked'],
                                   activeColor: Colors.black,
-                                  checkColor: const Color.fromRGBO(225, 170, 5, 1),
-                                  controlAffinity: ListTileControlAffinity.leading, // Mette la casella a sinistra come in image_4198c7.png
+                                  checkColor: Colors.amber,
+                                  controlAffinity: ListTileControlAffinity.leading,
                                   onChanged: (bool? valoreNuovo) {
                                     setState(() {
                                       item['isChecked'] = valoreNuovo ?? false;
@@ -177,24 +201,38 @@ class _AddCheckState extends State<AddCheck> {
 
                   const SizedBox(height: 20),
 
-                  // 7. BOTTONE OK DI CONFERMA FINALE
                   ElevatedButton(
-                    // Assicurati che nel bottone OK ci sia questo:
                     onPressed: () {
-                    String titoloInserito = _titleController.text.trim();
+                      // Se l'utente ha scritto un elemento ma non l'ha ancora confermato
+                      // (né con invio né con il pulsante +), lo aggiungiamo comunque:
+                      // altrimenti verrebbe perso silenziosamente.
+                      if (_itemController.text.trim().isNotEmpty) {
+                        _aggiungiElemento(_itemController.text);
+                      }
+
+                      String titoloInserito = _titleController.text.trim();
                       if (titoloInserito.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Inserisci un titolo per la tua checklist!')),
+                          const SnackBar(content: Text('Inserisci un titolo per la tua checklist!')),
                         );
-                      return;
-                    }
+                        return;
+                      }
 
-  // Questo è fondamentale: passa la mappa indietro
-  Navigator.pop(context, {
-    'titolo': titoloInserito,
-    'elementi': _elementiChecklist,
-  });
-},
+                      // Una checklist senza elementi non è una vera checklist:
+                      // richiediamo almeno un elemento prima di poter confermare.
+                      if (_elementiChecklist.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Aggiungi almeno un elemento alla checklist!')),
+                        );
+                        return;
+                      }
+
+                      // Passa la mappa aggiornata indietro a AddTrip
+                      Navigator.pop(context, {
+                        'titolo': titoloInserito,
+                        'elementi': _elementiChecklist,
+                      });
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
                       minimumSize: const Size(120, 50),

@@ -36,4 +36,16 @@ class StayController {
       whereArgs: [idTappa],
     );
   }
+
+  // Aggiorna un singolo campo di una tappa (usato dalla schermata di modifica)
+  // 'colonna' deve essere il nome della colonna nel DB
+  // (es. 'titolo', 'data', 'ora', 'descrizione', 'costoPrevisto')
+  Future<void> aggiornaCampoTappa(String idTappa, String colonna, dynamic valore) async {
+    await DatabaseHelper.instance.update(
+      'tappe',
+      {colonna: valore},
+      where: 'id = ?',
+      whereArgs: [idTappa],
+    );
+  }
 }

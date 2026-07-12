@@ -19,10 +19,39 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onConfigure: (db) async => await db.execute('PRAGMA foreign_keys = ON'),
       onCreate: _createDB,
+      onUpgrade: _upgradeDB,
     );
+  }
+
+  // MIGRAZIONE: aggiunge le colonne introdotte dopo la v1 ai database
+  // già esistenti sui dispositivi (creati prima che queste colonne esistessero).
+  // Ogni ALTER TABLE è protetto da un try/catch perché SQLite non ha un modo
+  // pulito per dire "aggiungi la colonna solo se non esiste già": se il
+  // database è già aggiornato, l'errore "duplicate column" viene ignorato.
+  Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    final comandi = <String>[
+      'ALTER TABLE tappe ADD COLUMN data TEXT',
+      'ALTER TABLE tappe ADD COLUMN ora TEXT',
+      'ALTER TABLE tappe ADD COLUMN descrizione TEXT',
+      'ALTER TABLE tappe ADD COLUMN costoPrevisto REAL',
+      'ALTER TABLE spese ADD COLUMN stato TEXT',
+      'ALTER TABLE spese ADD COLUMN descrizione TEXT',
+      'ALTER TABLE spese ADD COLUMN metodoPagamento TEXT',
+      'ALTER TABLE spese ADD COLUMN categoria TEXT',
+      'ALTER TABLE spese ADD COLUMN attivitaAssociata TEXT',
+      'ALTER TABLE spese ADD COLUMN valuta TEXT',
+    ];
+
+    for (final comando in comandi) {
+      try {
+        await db.execute(comando);
+      } catch (_) {
+        // La colonna esiste già: va bene così, andiamo avanti.
+      }
+    }
   }
 
   Future _createDB(Database db, int version) async {
@@ -51,13 +80,19 @@ class DatabaseHelper {
         FOREIGN KEY (idUtente) REFERENCES utenti (id) ON DELETE CASCADE
       )
     ''');
-    
+
     await db.execute('''
       CREATE TABLE spese (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         titolo TEXT NOT NULL,
         importo REAL NOT NULL,
         data TEXT NOT NULL,
+        stato TEXT,
+        descrizione TEXT,
+        metodoPagamento TEXT,
+        categoria TEXT,
+        attivitaAssociata TEXT,
+        valuta TEXT,
         idViaggio INTEGER NOT NULL,
         FOREIGN KEY (idViaggio) REFERENCES viaggi (id) ON DELETE CASCADE
       )
@@ -94,6 +129,25 @@ class DatabaseHelper {
         FOREIGN KEY (idChecklist) REFERENCES checklist (id) ON DELETE CASCADE
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE packlist (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        titolo TEXT NOT NULL,
+        idViaggio INTEGER NOT NULL,
+        FOREIGN KEY (idViaggio) REFERENCES viaggi (id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE packlist_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nomeItem TEXT NOT NULL,
+        isImballato INTEGER NOT NULL DEFAULT 0,
+        idPacklist INTEGER NOT NULL,
+        FOREIGN KEY (idPacklist) REFERENCES packlist (id) ON DELETE CASCADE
+      )
+    ''');
   }
 
   // --- METODI CRUD UNIVERSALI ---
@@ -117,9 +171,8 @@ class DatabaseHelper {
   }
 
   // AGGIORNAMENTO
-  Future<int> update(String table, Map<String, dynamic> row) async {
+  Future<int> update(String table, Map<String, dynamic> row, {required List<dynamic> whereArgs, required String where}) async {
     final db = await instance.database;
-    int id = row['id']; // Prende l'ID dell'oggetto che gli passiamo
-    return await db.update(table, row, where: 'id = ?', whereArgs: [id]);
+    return await db.update(table, row, where: where, whereArgs: whereArgs);
   }
 }
