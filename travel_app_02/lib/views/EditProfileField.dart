@@ -14,6 +14,9 @@ class EditProfileField extends StatefulWidget {
 class _EditProfileFieldState extends State<EditProfileField> {
   final _testoController = TextEditingController();
   bool _inizializzato = false;
+  String? _valutaSelezionata;
+
+  final List<String> _valuteDisponibili = const ['EUR', 'USD', 'GBP', 'JPY', 'CHF'];
 
   final ProfileController _profileController = ProfileController();
 
@@ -43,6 +46,7 @@ class _EditProfileFieldState extends State<EditProfileField> {
           break;
         case 'valuta':
           _testoController.text = utente.valuta;
+          _valutaSelezionata = _valuteDisponibili.contains(utente.valuta) ? utente.valuta : _valuteDisponibili.first;
           break;
         case 'password':
           _testoController.text = '';
@@ -53,6 +57,7 @@ class _EditProfileFieldState extends State<EditProfileField> {
 
     final bool isNumero = campo == 'eta';
     final bool isPassword = campo == 'password';
+    final bool isValuta = campo == 'valuta';
 
     return Scaffold(
       backgroundColor: Colors.amber,
@@ -80,22 +85,44 @@ class _EditProfileFieldState extends State<EditProfileField> {
             ),
             const SizedBox(height: 8),
 
-            TextField(
-              controller: _testoController,
-              obscureText: isPassword,
-              keyboardType: isNumero ? TextInputType.number : TextInputType.text,
-              inputFormatters: isNumero ? [FilteringTextInputFormatter.digitsOnly] : null,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.white,
-                hintText: isPassword ? 'Nuova password' : null,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                enabledBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black, width: 2), borderRadius: BorderRadius.zero),
-                focusedBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
-              ),
-            ),
+            isValuta
+                ? DropdownButtonFormField<String>(
+                    value: _valutaSelezionata,
+                    decoration: const InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                      enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black, width: 2), borderRadius: BorderRadius.zero),
+                      focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
+                    ),
+                    items: _valuteDisponibili
+                        .map((valuta) => DropdownMenuItem(value: valuta, child: Text(valuta)))
+                        .toList(),
+                    onChanged: (valore) {
+                      setState(() {
+                        _valutaSelezionata = valore;
+                        _testoController.text = valore ?? '';
+                      });
+                    },
+                  )
+                : TextField(
+                    controller: _testoController,
+                    obscureText: isPassword,
+                    keyboardType: isNumero ? TextInputType.number : TextInputType.text,
+                    inputFormatters: isNumero ? [FilteringTextInputFormatter.digitsOnly] : null,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      hintText: isPassword ? 'Nuova password' : null,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                      enabledBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black, width: 2), borderRadius: BorderRadius.zero),
+                      focusedBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
+                    ),
+                  ),
 
             const SizedBox(height: 40),
 

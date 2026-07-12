@@ -35,36 +35,6 @@ class _RecapPacklistState extends State<RecapPacklist> {
     });
   }
 
-  void _mostraRinominaPacklist() {
-    final controller = TextEditingController(text: _titolo);
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('MODIFICA TITOLO PACKLIST'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(border: OutlineInputBorder()),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              final nuovoTitolo = controller.text.trim();
-              if (nuovoTitolo.isEmpty) return;
-              await _controller.aggiornaTitolo(_idPacklist, nuovoTitolo);
-              if (dialogContext.mounted) Navigator.pop(dialogContext);
-              setState(() => _titolo = nuovoTitolo);
-            },
-            child: const Text('SALVA'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('ANNULLA'),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _mostraConfermaEliminazione() {
     showDialog(
       context: context,
@@ -105,6 +75,17 @@ class _RecapPacklistState extends State<RecapPacklist> {
           'RIEPILOGO PACKLIST',
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 20),
         ),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.menu, color: Colors.black, size: 30),
+            onSelected: (valore) {
+              if (valore == 'elimina') _mostraConfermaEliminazione();
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: 'elimina', child: Text('ELIMINA PACKLIST')),
+            ],
+          ),
+        ],
       ),
       body: _caricamento
           ? const Center(child: CircularProgressIndicator())
@@ -147,10 +128,18 @@ class _RecapPacklistState extends State<RecapPacklist> {
                                   checkColor: Colors.amber,
                                   controlAffinity: ListTileControlAffinity.leading,
                                   onChanged: (bool? nuovoValore) async {
-                                    await _controller.aggiornaStatoElemento(item['id'] as int, nuovoValore ?? false);
-                                    setState(() {
-                                      item['isImballato'] = (nuovoValore ?? false) ? 1 : 0;
-                                    });
+                                    try {
+                                      await _controller.aggiornaStatoElemento(item['id'] as int, nuovoValore ?? false);
+                                      setState(() {
+                                        item['isImballato'] = (nuovoValore ?? false) ? 1 : 0;
+                                      });
+                                    } catch (e) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Errore aggiornando l\'elemento: $e'), backgroundColor: Colors.red),
+                                        );
+                                      }
+                                    }
                                   },
                                 ),
                               );

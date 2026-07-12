@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:travel_app_02/models/expense.dart';
+import 'package:travel_app_02/controllers/cost_controller.dart';
 import 'BottomBar.dart';
 
 class EditCostField extends StatefulWidget {
@@ -14,10 +15,12 @@ class _EditCostFieldState extends State<EditCostField> {
   final _testoController = TextEditingController();
   String? _valoreDropdown;
   bool _inizializzato = false;
+  final CostController _costController = CostController();
 
   static const _campiConDropdown = {
     'categoria': ['Cibo e Bevande', 'Trasporti', 'Alloggio', 'Svago e Tour', 'Altro'],
     'metodoPagamento': ['Contanti', 'Carta di credito', 'Carta di debito'],
+    'valuta': ['EUR', 'USD', 'GBP', 'JPY', 'CHF'],
   };
 
   @override
@@ -64,6 +67,9 @@ class _EditCostFieldState extends State<EditCostField> {
           break;
         case 'metodoPagamento':
           _valoreDropdown = spesa.metodoPagamento;
+          break;
+        case 'valuta':
+          _valoreDropdown = spesa.valuta ?? 'EUR';
           break;
       }
       _inizializzato = true;
@@ -130,7 +136,7 @@ class _EditCostFieldState extends State<EditCostField> {
 
             Center(
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   final dynamic nuovoValore;
                   if (isDropdown) {
                     nuovoValore = _valoreDropdown;
@@ -140,22 +146,18 @@ class _EditCostFieldState extends State<EditCostField> {
                     nuovoValore = _testoController.text;
                   }
 
-                  // Ricostruiamo la spesa: i campi di Expense sono 'final',
-                  // quindi non possiamo modificarla in-place.
-                  final nuovaSpesa = Expense(
-                    id: spesa.id,
-                    titolo: campo == 'titolo' ? nuovoValore : spesa.titolo,
-                    importo: campo == 'importo' ? nuovoValore : spesa.importo,
-                    stato: campo == 'stato' ? nuovoValore : spesa.stato,
-                    data: campo == 'data' ? nuovoValore : spesa.data,
-                    descrizione: campo == 'descrizione' ? nuovoValore : spesa.descrizione,
-                    metodoPagamento: campo == 'metodoPagamento' ? nuovoValore : spesa.metodoPagamento,
-                    categoria: campo == 'categoria' ? nuovoValore : spesa.categoria,
-                    viaggioAssociato: campo == 'viaggioAssociato' ? nuovoValore : spesa.viaggioAssociato,
-                    attivitaAssociata: campo == 'attivitaAssociata' ? nuovoValore : spesa.attivitaAssociata,
-                  );
-
-                  Navigator.pop(context, nuovaSpesa);
+                  try {
+                    await _costController.aggiornaCampoSpesa(spesa.id, campo, nuovoValore);
+                    if (context.mounted) {
+                      Navigator.pop(context, true);
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Errore durante il salvataggio: $e')),
+                      );
+                    }
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,

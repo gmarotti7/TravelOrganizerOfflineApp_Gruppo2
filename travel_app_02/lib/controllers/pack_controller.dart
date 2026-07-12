@@ -63,4 +63,32 @@ class PackController {
       whereArgs: [idPacklist],
     );
   }
+
+  // Aggiunge un nuovo elemento a una packlist già esistente
+  Future<int> aggiungiElemento(int idPacklist, String nomeItem) async {
+    return DatabaseHelper.instance.insert('packlist_items', {
+      'nomeItem': nomeItem,
+      'isImballato': 0,
+      'idPacklist': idPacklist,
+    });
+  }
+
+  // Modifica il nome di un singolo elemento della packlist
+  Future<void> aggiornaNomeElemento(int idItem, String nuovoNome) async {
+    await DatabaseHelper.instance.update(
+      'packlist_items',
+      {'nomeItem': nuovoNome},
+      where: 'id = ?',
+      whereArgs: [idItem],
+    );
+  }
+
+  // Elimina un singolo elemento dalla packlist
+  Future<void> eliminaElemento(int idItem) async {
+    await DatabaseHelper.instance.delete(
+      'packlist_items',
+      where: 'id = ?',
+      whereArgs: [idItem],
+    );
+  }
 }

@@ -2,7 +2,7 @@ import 'package:travel_app_02/models/expense.dart';
 import 'package:travel_app_02/services/database_helper.dart';
 
 class CostController {
-  
+
   // Salva una spesa nel database SQLite
   Future<Expense> salvaSpesa(Expense spesa, int idViaggio) async {
     final id = await DatabaseHelper.instance.insert(
@@ -20,6 +20,7 @@ class CostController {
       categoria: spesa.categoria,
       attivitaAssociata: spesa.attivitaAssociata,
       viaggioAssociato: idViaggio.toString(),
+      valuta: spesa.valuta,
     );
   }
 
@@ -31,6 +32,17 @@ class CostController {
       whereArgs: [idViaggio],
     );
     return mappe.map((m) => Expense.fromMap(m)).toList();
+  }
+
+  // Carica una singola spesa dal DB tramite id (usato per ricaricare i dati aggiornati dopo una modifica)
+  Future<Expense?> caricaSpesa(String idSpesa) async {
+    final mappe = await DatabaseHelper.instance.queryAllRows(
+      'spese',
+      where: 'id = ?',
+      whereArgs: [idSpesa],
+    );
+    if (mappe.isEmpty) return null;
+    return Expense.fromMap(mappe.first);
   }
 
   // Elimina una spesa dal DB

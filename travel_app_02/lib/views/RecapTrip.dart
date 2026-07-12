@@ -6,6 +6,7 @@ import 'package:travel_app_02/controllers/stay_controller.dart';
 import 'package:travel_app_02/controllers/trip_controller.dart';
 import 'package:travel_app_02/controllers/checklist_controller.dart';
 import 'package:travel_app_02/controllers/pack_controller.dart';
+import 'package:travel_app_02/controllers/cost_controller.dart';
 import 'package:travel_app_02/models/expense.dart';
 import 'package:travel_app_02/models/stay.dart';
 import 'package:travel_app_02/models/trip.dart';
@@ -27,9 +28,11 @@ class _RecapTripState extends State<RecapTrip> {
   final StayController _tappaController = StayController();
   final ChecklistController _checklistController = ChecklistController();
   final PackController _packController = PackController();
+  final CostController _costController = CostController();
 
   List<Stay> _tappe = [];
   bool _caricamentoTappe = true;
+  bool _caricamentoSpese = true;
 
   Map<String, dynamic>? _checklist; // {id, titolo} oppure null se non esiste ancora
   Map<String, dynamic>? _packlist;
@@ -45,7 +48,26 @@ class _RecapTripState extends State<RecapTrip> {
       _caricaTappe(),
       _caricaChecklist(),
       _caricaPacklist(),
+      _caricaSpese(),
     ]);
+  }
+
+  Future<void> _caricaSpese() async {
+    final idViaggio = int.tryParse(widget.controller.trip.id);
+    if (idViaggio == null) {
+      setState(() => _caricamentoSpese = false);
+      return;
+    }
+    try {
+      final speseDb = await _costController.caricaSpeseViaggio(idViaggio);
+      setState(() {
+        widget.controller.trip.spese = speseDb;
+        _caricamentoSpese = false;
+      });
+    } catch (e) {
+      setState(() => _caricamentoSpese = false);
+      _mostraErrore('Errore caricando le spese: $e');
+    }
   }
 
   Future<void> _caricaTappe() async {
@@ -312,9 +334,20 @@ class _RecapTripState extends State<RecapTrip> {
               onPressed: () async {
                 final nuovaSpesa = await Navigator.pushNamed(context, AppRoutes.newCost, arguments: widget.controller.trip);
                 if (nuovaSpesa != null && nuovaSpesa is Expense) {
-                  setState(() {
-                    widget.controller.aggiungiSpesa(nuovaSpesa);
-                  });
+                  final idViaggio = int.tryParse(trip.id);
+                  if (idViaggio == null) {
+                    _mostraErrore('ID viaggio non valido, impossibile salvare la spesa.');
+                    return;
+                  }
+                  try {
+                    await _costController.salvaSpesa(nuovaSpesa, idViaggio);
+                    await _caricaSpese();
+                  } catch (e) {
+                    // Se vedi qui un errore "no such column", devi disinstallare l'app
+                    // dall'emulatore (il database salvato è vecchio e non ha ancora
+                    // le nuove colonne di 'spese': stato, descrizione, metodoPagamento, ecc.)
+                    _mostraErrore('Errore salvando la spesa: $e');
+                  }
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -349,7 +382,12 @@ class _RecapTripState extends State<RecapTrip> {
                 children: [
                   const Text("LISTA SPESE:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
-                  if (trip.spese.isEmpty)
+                  if (_caricamentoSpese)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: CircularProgressIndicator(),
+                    )
+                  else if (trip.spese.isEmpty)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 8),
                       child: Text("Nessuna spesa ancora aggiunta"),
@@ -357,12 +395,15 @@ class _RecapTripState extends State<RecapTrip> {
                   else
                     ...trip.spese.map(
                       (spesa) => InkWell(
-                        onTap: () {
-                          Navigator.pushNamed(
+                        onTap: () async {
+                          final aggiorna = await Navigator.pushNamed(
                             context,
                             AppRoutes.recapCost,
                             arguments: spesa,
                           );
+                          if (aggiorna == true) {
+                            _caricaSpese();
+                          }
                         },
                         child: Container(
                           width: double.infinity,

@@ -35,6 +35,110 @@ class _RecapChecklistState extends State<RecapChecklist> {
     });
   }
 
+  void _mostraRinominaChecklist() {
+    final controller = TextEditingController(text: _titolo);
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('MODIFICA TITOLO CHECKLIST'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(border: OutlineInputBorder()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final nuovoTitolo = controller.text.trim();
+              if (nuovoTitolo.isEmpty) return;
+              await _controller.aggiornaTitolo(_idChecklist, nuovoTitolo);
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+              setState(() => _titolo = nuovoTitolo);
+            },
+            child: const Text('SALVA'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('ANNULLA'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _mostraModificaElemento(Map<String, dynamic> item) {
+    final controller = TextEditingController(text: item['nomeItem'] as String);
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('MODIFICA ELEMENTO'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(border: OutlineInputBorder()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final nuovoNome = controller.text.trim();
+              if (nuovoNome.isEmpty) return;
+              try {
+                await _controller.aggiornaNomeElemento(item['id'] as int, nuovoNome);
+                if (dialogContext.mounted) Navigator.pop(dialogContext);
+                if (mounted) setState(() => item['nomeItem'] = nuovoNome);
+              } catch (e) {
+                if (dialogContext.mounted) Navigator.pop(dialogContext);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Errore modificando l\'elemento: $e'), backgroundColor: Colors.red),
+                  );
+                }
+              }
+            },
+            child: const Text('SALVA'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('ANNULLA'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confermaEliminaElemento(Map<String, dynamic> item) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('ELIMINA ELEMENTO'),
+        content: Text('Eliminare "${item['nomeItem']}" dalla checklist?'),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              try {
+                await _controller.eliminaElemento(item['id'] as int);
+                if (dialogContext.mounted) Navigator.pop(dialogContext);
+                if (mounted) {
+                  setState(() => _elementi.removeWhere((e) => e['id'] == item['id']));
+                }
+              } catch (e) {
+                if (dialogContext.mounted) Navigator.pop(dialogContext);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Errore eliminando l\'elemento: $e'), backgroundColor: Colors.red),
+                  );
+                }
+              }
+            },
+            child: const Text('SÌ'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('NO'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _mostraConfermaEliminazione() {
     showDialog(
       context: context,
@@ -110,6 +214,7 @@ class _RecapChecklistState extends State<RecapChecklist> {
                               final item = _elementi[index];
                               final bool completato = (item['isCompletato'] as int) == 1;
                               return Container(
+                                key: ValueKey(item['id']),
                                 margin: const EdgeInsets.only(bottom: 8),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
@@ -141,10 +246,18 @@ class _RecapChecklistState extends State<RecapChecklist> {
                                   checkColor: Colors.amber,
                                   controlAffinity: ListTileControlAffinity.leading,
                                   onChanged: (bool? nuovoValore) async {
-                                    await _controller.aggiornaStatoElemento(item['id'] as int, nuovoValore ?? false);
-                                    setState(() {
-                                      item['isCompletato'] = (nuovoValore ?? false) ? 1 : 0;
-                                    });
+                                    try {
+                                      await _controller.aggiornaStatoElemento(item['id'] as int, nuovoValore ?? false);
+                                      setState(() {
+                                        item['isCompletato'] = (nuovoValore ?? false) ? 1 : 0;
+                                      });
+                                    } catch (e) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Errore aggiornando l\'elemento: $e'), backgroundColor: Colors.red),
+                                        );
+                                      }
+                                    }
                                   },
                                 ),
                               );
