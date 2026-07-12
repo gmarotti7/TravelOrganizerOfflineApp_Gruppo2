@@ -23,7 +23,7 @@ class RecTripController extends ChangeNotifier {
     } else if (oggi.isAfter(fine)) {
       return Colors.red;
     } else {
-      return Colors.amber;
+      return Colors.yellowAccent;
     }
   }
 
