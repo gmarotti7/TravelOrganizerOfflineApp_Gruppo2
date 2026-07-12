@@ -144,6 +144,23 @@ class _RecapTripState extends State<RecapTrip> {
     return NumberFormat.currency(locale: 'it_IT', symbol: valutaSpecifica ?? Sessione.valutaAttuale).format(importo);
   }
 
+  // --- NUOVA FUNZIONE PER GESTIRE IL FORMATO DATE ---
+  String _formattaDataSafely(dynamic data) {
+    if (data == null || data.toString().isEmpty) return 'N/D';
+    if (data is DateTime) {
+      return DateFormat('dd/MM/yyyy').format(data);
+    }
+    if (data is String) {
+      try {
+        final parsed = DateTime.parse(data);
+        return DateFormat('dd/MM/yyyy').format(parsed);
+      } catch (e) {
+        return data; // Ritorna la stringa così come l'hai salvata
+      }
+    }
+    return data.toString();
+  }
+
   @override
   Widget build(BuildContext context) {
     const Color gialloSfondo = Colors.amber;
@@ -202,6 +219,32 @@ class _RecapTripState extends State<RecapTrip> {
                 fontWeight: FontWeight.bold,
               ),
             ),
+            const SizedBox(height: 10),
+
+            // --- NUOVO BLOCCO DATE VISIVE ---
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.calendar_month, size: 18, color: Colors.black87),
+                const SizedBox(width: 5),
+                Text(
+                  _formattaDataSafely(trip.dataInizio),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10.0),
+                  child: Text("➔", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black54)),
+                ),
+                const Icon(Icons.calendar_month, size: 18, color: Colors.black87),
+                const SizedBox(width: 5),
+                Text(
+                  _formattaDataSafely(trip.dataFine),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                ),
+              ],
+            ),
+            // ---------------------------------
+
             const SizedBox(height: 20),
 
             // Contenitore Bianco per TAPPE, PACKLIST e CHECKLIST
@@ -558,7 +601,6 @@ class _RecapTripState extends State<RecapTrip> {
 
   // ---------- ELIMINA / MODIFICA VIAGGIO ----------
 
-  // Sostituisci il metodo _mostraConfermaEliminazioneViaggio con questo:
   void _mostraConfermaEliminazioneViaggio(BuildContext context) {
     final trip = widget.controller.trip;
     showDialog(

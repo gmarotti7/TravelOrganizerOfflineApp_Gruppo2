@@ -210,6 +210,8 @@ class _NewCostState extends State<NewCost> {
               const SizedBox(height: 5),
               TextFormField(
                 controller: _dataController,
+                readOnly: true,
+                onTap: () => _selezionaData(context),
                 keyboardType: TextInputType.datetime,
                 validator: (valore) {
                   if (valore == null || valore.trim().isEmpty) {
