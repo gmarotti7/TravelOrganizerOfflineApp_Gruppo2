@@ -1,11 +1,14 @@
 // lib/views/home_page.dart
 import 'package:flutter/material.dart';
+import 'package:travel_app_02/controllers/checklist_controller.dart';
 import 'package:travel_app_02/route.dart';
 import 'BottomBar.dart';
 import 'package:travel_app_02/models/trip.dart';
 import 'package:travel_app_02/sessione.dart';
 import 'package:travel_app_02/controllers/trip_controller.dart';
 import 'package:travel_app_02/controllers/pack_controller.dart';
+import 'package:travel_app_02/controllers/stay_controller.dart';
+import 'package:travel_app_02/models/stay.dart';
 
 class HomePage extends StatefulWidget{
   const HomePage({super.key});
@@ -36,17 +39,38 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _caricaDatiDalDatabase();
+  // Inizializza subito la lista filtrata con i dati mock di default
+    _viaggiFiltrati = List.from(_tuttiIViaggi);
+
+  // Aspetta che l'interfaccia sia pronta prima di caricare dal Database
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _caricaDatiDalDatabase();
+    });
   }
 
   Future<void> _caricaDatiDalDatabase() async {
     if (Sessione.idUtenteAttuale != null) {
-      final viaggiDb = await _controller.caricaViaggiUtente(Sessione.idUtenteAttuale!);
-      setState(() {
-        _tuttiIViaggi.clear();
-        _tuttiIViaggi.addAll(viaggiDb);
-        _viaggiFiltrati = List.from(_tuttiIViaggi);
-      });
+      try {
+        final viaggiDb = await _controller.caricaViaggiUtente(Sessione.idUtenteAttuale!);
+      
+        if (!mounted) return;
+
+        setState(() {
+          _tuttiIViaggi.clear();
+          _tuttiIViaggi.addAll(viaggiDb);
+          _viaggiFiltrati = List.from(_tuttiIViaggi);
+        });
+      } catch (e) {
+        debugPrint("Errore caricamento DB: $e");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Errore caricamento dati: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -287,31 +311,36 @@ class _HomePageState extends State<HomePage> {
   Widget _buildBottoneNuovoViaggio() {
     return InkWell(
       onTap: () async {
-      final risultato = await Navigator.pushNamed(context, AppRoutes.addTrip);
+        final risultato = await Navigator.pushNamed(context, AppRoutes.addTrip);
 
-      if (risultato != null && risultato is Map) {
-
-        int idUtenteSicuro = Sessione.idUtenteAttuale ?? 1;
-
-          Trip nuovo = Trip(
-            titolo: risultato['titolo'],
-            luogo: risultato['luogo'],
-            dataInizio: risultato['dataInizio'],
-            dataFine: risultato['dataFine'],
-            id: '0',
-            budgetPrevisto: risultato['budgetPrevisto'],
-          );
+        if (risultato != null && risultato is Map<String, dynamic>) {
+          final nuovoViaggio = risultato['viaggio'] as Trip;
+          final int idUtente = Sessione.idUtenteAttuale ?? 1;
 
           try {
-            Trip salvato = await _controller.salvaNuovoViaggio(nuovo, idUtenteSicuro);
+            final salvato = await TripController().salvaNuovoViaggio(nuovoViaggio, idUtente);
 
-            // Se in Add_trip è stata scelta una packlist consigliata, la salviamo
-            // collegata al viaggio appena creato.
-            final packlistScelta = risultato['packlist'];
-            if (packlistScelta != null && packlistScelta is Map) {
+            if (risultato.containsKey('tappe')) {
+              final tappeScelte = risultato['tappe'] as List;
+              for (final tappa in tappeScelte) {
+                if (tappa is Stay) {
+                  await StayController().salvaNuovaTappa(tappa, int.parse(salvato.id));
+                }
+              }
+            }
+
+            if (risultato['packlist'] != null && risultato['packlistItems'] != null) {
               await PackController().salvaPacklist(
-                packlistScelta['titolo'] as String,
-                List<Map<String, dynamic>>.from(packlistScelta['elementi'] as List),
+                risultato['packlist'],
+                risultato['packlistItems'],
+                int.parse(salvato.id),
+              );
+            }
+
+            if (risultato['checklist'] != null && risultato['checklistItems'] != null) {
+              await ChecklistController().salvaChecklist(
+                risultato['checklist'],
+                risultato['checklistItems'],
                 int.parse(salvato.id),
               );
             }
@@ -324,9 +353,8 @@ class _HomePageState extends State<HomePage> {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Errore di salvataggio. Hai fatto il login correttamente? ($e)'),
+                  content: Text('Errore di salvataggio: $e'),
                   backgroundColor: Colors.red,
-                  duration: const Duration(seconds: 4),
                 ),
               );
             }

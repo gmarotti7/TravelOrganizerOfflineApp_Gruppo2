@@ -30,6 +30,11 @@ class Expense {
       'titolo': titolo,
       'importo': importo,
       'data': data ?? '',
+      'stato': stato ?? '',
+      'descrizione': descrizione ?? '',
+      'metodoPagamento': metodoPagamento ?? '',
+      'categoria': categoria ?? '',
+      'attivitaAssociata': attivitaAssociata ?? '',
       'idViaggio': idViaggio,
     };
   }
@@ -38,8 +43,14 @@ class Expense {
     return Expense(
       id: map['id'].toString(),
       titolo: map['titolo'],
-      importo: map['importo'],
+      importo: (map['importo'] as num).toDouble(),
       data: map['data'],
+      stato: map['stato'],
+      descrizione: map['descrizione'],
+      metodoPagamento: map['metodoPagamento'],
+      categoria: map['categoria'],
+      attivitaAssociata: map['attivitaAssociata'],
+      viaggioAssociato: map['idViaggio']?.toString(),
     );
   }
 }

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'Add_check.dart'; // Assicurati che il nome del file sia corretto!
-import 'package:travel_app_02/controllers/trip_Controller.dart';
+import 'Add_check.dart';
+import 'NewStay.dart';
+import 'package:travel_app_02/models/stay.dart';
+import 'package:travel_app_02/models/trip.dart';
+import 'package:travel_app_02/controllers/trip_controller.dart';
 
 class AddTrip extends StatefulWidget {
   const AddTrip({super.key});
@@ -10,21 +13,18 @@ class AddTrip extends StatefulWidget {
 }
 
 class _AddTripState extends State<AddTrip> {
-  // Controller per i campi di testo
   final _titoloController = TextEditingController();
   final _destinazioneController = TextEditingController();
   final _budgetController = TextEditingController();
   final _noteController = TextEditingController();
   final TripController _viaggioController = TripController();
 
-  // Gestione Date
   DateTime? _dataPartenza;
   DateTime? _dataRitorno;
 
   // Packlist consigliata selezionata (al massimo una): null, 'MARE', 'MONTAGNA' o 'CITTÀ'
   String? _packlistSelezionata;
 
-  // Mappe per tracciare gli elementi spuntati dentro le liste consigliate
   final Map<String, bool> _oggettiMare = {'Crema solare': true, 'Ciabatte': true, 'Costume': true};
   final Map<String, bool> _oggettiMontagna = {'Scarponi': true, 'Giacca a vento': true, 'Borraccia': true};
   final Map<String, bool> _oggettiCitta = {'Mappa': true, 'Scarpe comode': true, 'Powerbank': true};
@@ -43,13 +43,9 @@ class _AddTripState extends State<AddTrip> {
     }
   }
 
-  // Liste simulate
-  final List<String> _tappeAggiunte = ['Tappa 1: Hotel Roma', 'Tappa 2: Colosseo'];
-
-  // MODIFICA 1: Ora la lista accetta Mappe (perché AddCheck ci restituisce {titolo: '...', items: [...]})
+  final List<Stay> _tappeAggiunte = [];
   final List<Map<String, dynamic>> _checklistPersonalizzate = [];
 
-  // Valuta simulata
   final String _valutaScelta = '€';
 
   @override
@@ -61,14 +57,48 @@ class _AddTripState extends State<AddTrip> {
     super.dispose();
   }
 
-  // MODIFICA 2: Aggiunta la funzione per aprire la checklist e ricevere i dati
+  Future<void> _apriAggiungiTappa() async {
+    // Le tappe devono stare dentro le date del viaggio: se non sono ancora
+    // state scelte, chiediamo prima quelle.
+    if (_dataPartenza == null || _dataRitorno == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Seleziona prima le date del viaggio!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Viaggio "temporaneo" (non ancora salvato) usato solo per passare a
+    // NewStay i limiti di data corretti.
+    final viaggioTemporaneo = Trip(
+      id: '',
+      titolo: _titoloController.text,
+      luogo: _destinazioneController.text,
+      dataInizio: _dataPartenza!,
+      dataFine: _dataRitorno!,
+      budgetPrevisto: 0,
+    );
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => NewStay(viaggio: viaggioTemporaneo)),
+    );
+
+    if (result != null && result is Stay) {
+      setState(() {
+        _tappeAggiunte.add(result);
+      });
+    }
+  }
+
   Future<void> _apriAggiungiChecklist() async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const AddCheck()),
     );
 
-    // Se l'utente preme OK, salviamo i dati ricevuti
     if (result != null && result is Map<String, dynamic>) {
       setState(() {
         _checklistPersonalizzate.add(result);
@@ -76,7 +106,24 @@ class _AddTripState extends State<AddTrip> {
     }
   }
 
-  // Funzione per selezionare il range di date
+  // Modifica una checklist personalizzata già aggiunta (prima della creazione del viaggio)
+  Future<void> _modificaChecklist(int index) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddCheck(
+          checklistIniziale: _checklistPersonalizzate[index],
+        ),
+      ),
+    );
+
+    if (result != null && result is Map<String, dynamic>) {
+      setState(() {
+        _checklistPersonalizzate[index] = result;
+      });
+    }
+  }
+
   Future<void> _selezionaDateRange(BuildContext context) async {
     final DateTime oggi = DateTime.now();
     final DateTimeRange? picked = await showDateRangePicker(
@@ -164,9 +211,7 @@ class _AddTripState extends State<AddTrip> {
 
               _buildButtonNero(
                 testo: 'AGGIUNGI TAPPA',
-                onPressed: () {
-                  debugPrint("Andiamo alla pagina aggiungi tappa...");
-                },
+                onPressed: _apriAggiungiTappa,
               ),
 
               if (_tappeAggiunte.isNotEmpty) ...[
@@ -179,7 +224,21 @@ class _AddTripState extends State<AddTrip> {
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: _tappeAggiunte.map((tappa) => Text('• $tappa', style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black))).toList(),
+                    children: _tappeAggiunte.asMap().entries.map((entry) {
+                      final tappa = entry.value;
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text('• ${tappa.titolo}', style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black)),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.black54, size: 18),
+                            onPressed: () => setState(() => _tappeAggiunte.removeAt(entry.key)),
+                          ),
+                        ],
+                      );
+                    }).toList(),
                   ),
                 ),
               ],
@@ -199,31 +258,33 @@ class _AddTripState extends State<AddTrip> {
 
               const SizedBox(height: 25),
 
-              // MODIFICA 3: Collegato il bottone alla funzione vera
               _buildButtonNero(
                 testo: 'NUOVA CHECKLIST',
-                onPressed: _apriAggiungiChecklist, // Ora questo funziona e apre l'altra pagina!
+                onPressed: _apriAggiungiChecklist,
               ),
 
-              // MODIFICA 4: Adattato il testo per mostrare il 'titolo' dalla mappa
+              // Lista Checklist Personalizzate con pulsante modifica
               if (_checklistPersonalizzate.isNotEmpty) ...[
                 const SizedBox(height: 8),
-                ..._checklistPersonalizzate.map((checklist) => Container(
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(5), border: Border.all(color: Colors.black, width: 1.5)),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Stampiamo la chiave 'titolo' della mappa
-                      Text(checklist['titolo'], style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.black, size: 20),
-                        onPressed: () => debugPrint("Naviga verso recap_check.dart per modificare ${checklist['titolo']}"),
-                      ),
-                    ],
-                  ),
-                )),
+                ..._checklistPersonalizzate.asMap().entries.map((entry) {
+                  int index = entry.key;
+                  var checklist = entry.value;
+                  return Container(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(5), border: Border.all(color: Colors.black, width: 1.5)),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(checklist['titolo'] ?? 'Senza Titolo', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.black, size: 20),
+                          onPressed: () => _modificaChecklist(index),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
               ],
 
               const SizedBox(height: 25),
@@ -280,7 +341,6 @@ class _AddTripState extends State<AddTrip> {
               _buildButtonNero(
                 testo: 'CONFERMA',
                 onPressed: () {
-                  // Aggiunto controllo sulle date per sicurezza
                   if (_titoloController.text.isNotEmpty &&
                       _destinazioneController.text.isNotEmpty &&
                       _dataPartenza != null &&
@@ -288,28 +348,47 @@ class _AddTripState extends State<AddTrip> {
 
                     // Se l'utente ha scelto una packlist consigliata, prepariamo gli
                     // elementi da salvare (solo quelli lasciati spuntati nella lista).
-                    Map<String, dynamic>? packlistScelta;
+                    String? packlistTitolo;
+                    List<Map<String, dynamic>>? packlistElementi;
                     if (_packlistSelezionata != null) {
                       final mappaOggetti = _mappaPerTitolo(_packlistSelezionata!);
-                      packlistScelta = {
-                        'titolo': _packlistSelezionata,
-                        'elementi': mappaOggetti.entries
-                            .map((e) => {'nome': e.key, 'isChecked': e.value})
-                            .toList(),
-                      };
+                      packlistTitolo = _packlistSelezionata;
+                      packlistElementi = mappaOggetti.entries
+                          .map((e) => {'nome': e.key, 'isChecked': e.value})
+                          .toList();
                     }
 
-                    final nuovoViaggioDati = {
-                      'titolo': _titoloController.text,
-                      'luogo': _destinazioneController.text,
-                      'dataInizio': _dataPartenza, // Nome corretto per la Home
-                      'dataFine': _dataRitorno,    // Aggiunto
-                      'budgetPrevisto': double.tryParse(_budgetController.text.replaceAll(',', '.')) ?? 0.0, // Aggiunto
-                      'packlist': packlistScelta, // null se nessuna scelta
+                    // Il database supporta al massimo una checklist per viaggio:
+                    // usiamo la prima creata, se presente.
+                    String? checklistTitolo;
+                    List<Map<String, dynamic>>? checklistElementi;
+                    if (_checklistPersonalizzate.isNotEmpty) {
+                      final prima = _checklistPersonalizzate.first;
+                      checklistTitolo = prima['titolo'] as String?;
+                      checklistElementi = prima['elementi'] != null
+                          ? List<Map<String, dynamic>>.from(prima['elementi'])
+                          : [];
+                    }
+
+                    final nuovoViaggio = Trip(
+                      id: '',
+                      titolo: _titoloController.text,
+                      luogo: _destinazioneController.text,
+                      dataInizio: _dataPartenza!,
+                      dataFine: _dataRitorno!,
+                      budgetPrevisto: double.tryParse(_budgetController.text.replaceAll(',', '.')) ?? 0.0,
+                    );
+
+                    final risultato = {
+                      'viaggio': nuovoViaggio,
+                      'tappe': _tappeAggiunte,
+                      if (packlistTitolo != null) 'packlist': packlistTitolo,
+                      if (packlistElementi != null) 'packlistItems': packlistElementi,
+                      if (checklistTitolo != null) 'checklist': checklistTitolo,
+                      if (checklistElementi != null) 'checklistItems': checklistElementi,
                     };
-                    Navigator.pop(context, nuovoViaggioDati);
+                    Navigator.pop(context, risultato);
                   } else {
-                    // Mostra un avviso se mancano dati
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Compila titolo, destinazione e scegli le date!'),
@@ -326,7 +405,6 @@ class _AddTripState extends State<AddTrip> {
     );
   }
 
-  // --- HELPER WIDGETS ---
   Widget _buildTextField({required TextEditingController controller, required String hintText}) {
     return TextField(
       controller: controller,

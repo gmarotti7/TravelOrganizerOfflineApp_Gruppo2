@@ -54,4 +54,13 @@ class PackController {
       whereArgs: [idPacklist],
     );
   }
+
+  Future<void> aggiornaTitolo(int idPacklist, String nuovoTitolo) async {
+    await DatabaseHelper.instance.update(
+      'packlist',
+      {'titolo': nuovoTitolo},
+      where: 'id = ?',
+      whereArgs: [idPacklist],
+    );
+  }
 }

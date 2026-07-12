@@ -13,6 +13,7 @@ import 'package:travel_app_02/views/Add_check.dart';
 import 'package:travel_app_02/views/RecapChecklist.dart';
 import 'package:travel_app_02/views/RecapPacklist.dart';
 import 'package:travel_app_02/views/EditTripField.dart';
+import 'package:travel_app_02/views/EditProfileField.dart';
 import 'package:travel_app_02/views/start.dart'; 
 import 'package:travel_app_02/views/login.dart';   
 import 'package:travel_app_02/views/sign_up.dart'; 
@@ -38,6 +39,7 @@ class AppRoutes {
   static const String recapChecklist = '/recap_checklist';
   static const String recapPacklist = '/recap_packlist';
   static const String editTripField = '/edit_trip_field';
+  static const String editProfileField = '/edit_profile_field';
 
   static Map<String, WidgetBuilder> getRoutes() {
     return {
@@ -51,12 +53,17 @@ class AppRoutes {
       statsPage: (context) => const StatsPage(),
       newCost: (context) => const NewCost(),
       recapCost: (context) => const RecapCost(),
-      newStay: (context) => const NewStay(),
+      newStay: (context) {
+        final args = ModalRoute.of(context)?.settings.arguments;
+        final Trip? viaggio = args is Trip ? args : null;
+        return NewStay(viaggio: viaggio);
+      },
       recapStay: (context) => const RecapStay(),
       addCheck: (context) => const AddCheck(),
       recapChecklist: (context) => const RecapChecklist(),
       recapPacklist: (context) => const RecapPacklist(),
       editTripField: (context) => const EditTripField(),
+      editProfileField: (context) => const EditProfileField(),
       riepilogoViaggio: (context) {
         final viaggioInArrivo = ModalRoute.of(context)!.settings.arguments as Trip;
         return RecapTrip(

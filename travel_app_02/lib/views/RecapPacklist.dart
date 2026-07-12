@@ -35,6 +35,36 @@ class _RecapPacklistState extends State<RecapPacklist> {
     });
   }
 
+  void _mostraRinominaPacklist() {
+    final controller = TextEditingController(text: _titolo);
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('MODIFICA TITOLO PACKLIST'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(border: OutlineInputBorder()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final nuovoTitolo = controller.text.trim();
+              if (nuovoTitolo.isEmpty) return;
+              await _controller.aggiornaTitolo(_idPacklist, nuovoTitolo);
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+              setState(() => _titolo = nuovoTitolo);
+            },
+            child: const Text('SALVA'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('ANNULLA'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _mostraConfermaEliminazione() {
     showDialog(
       context: context,
@@ -80,8 +110,10 @@ class _RecapPacklistState extends State<RecapPacklist> {
             icon: const Icon(Icons.menu, color: Colors.black, size: 30),
             onSelected: (valore) {
               if (valore == 'elimina') _mostraConfermaEliminazione();
+              if (valore == 'modifica') _mostraRinominaPacklist();
             },
             itemBuilder: (context) => const [
+              PopupMenuItem(value: 'modifica', child: Text('MODIFICA PACKLIST')),
               PopupMenuItem(value: 'elimina', child: Text('ELIMINA PACKLIST')),
             ],
           ),

@@ -54,4 +54,13 @@ class ChecklistController {
       whereArgs: [idChecklist],
     );
   }
+
+  Future<void> aggiornaTitolo(int idChecklist, String nuovoTitolo) async {
+    await DatabaseHelper.instance.update(
+      'checklist',
+      {'titolo': nuovoTitolo},
+      where: 'id = ?',
+      whereArgs: [idChecklist],
+    );
+  }
 }

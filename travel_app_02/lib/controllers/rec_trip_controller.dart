@@ -11,14 +11,19 @@ class RecTripController extends ChangeNotifier {
     return trip.spese.fold(0, (sum, item) => sum + item.importo);
   }
 
+  // Sostituisci il getter statoViaggioColor con questo:
   Color get statoViaggioColor {
     final now = DateTime.now();
-    if (now.isBefore(trip.dataInizio)) {
-      return Colors.red; 
-    } else if (now.isAfter(trip.dataFine)) {
-      return Colors.green; 
+    final oggi = DateTime(now.year, now.month, now.day);
+    final inizio = DateTime(trip.dataInizio.year, trip.dataInizio.month, trip.dataInizio.day);
+    final fine = DateTime(trip.dataFine.year, trip.dataFine.month, trip.dataFine.day);
+
+    if (oggi.isBefore(inizio)) {
+      return Colors.red;
+    } else if (oggi.isAfter(fine)) {
+      return Colors.green;
     } else {
-      return Colors.amber; 
+      return Colors.amber;
     }
   }
 
@@ -33,5 +38,18 @@ class RecTripController extends ChangeNotifier {
   void aggiungiSpesa(Expense spesa) {
     trip.spese.add(spesa);
     notifyListeners(); 
+  }
+
+  void rimuoviSpesa(Expense spesa) {
+    trip.spese.remove(spesa);
+    notifyListeners();
+  }
+
+  void sostituisciSpesa(Expense vecchia, Expense nuova) {
+    final indice = trip.spese.indexOf(vecchia);
+    if (indice != -1) {
+      trip.spese[indice] = nuova;
+      notifyListeners();
+    }
   }
 }

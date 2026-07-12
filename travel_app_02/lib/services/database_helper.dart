@@ -58,6 +58,11 @@ class DatabaseHelper {
         titolo TEXT NOT NULL,
         importo REAL NOT NULL,
         data TEXT NOT NULL,
+        stato TEXT,
+        descrizione TEXT,
+        metodoPagamento TEXT,
+        categoria TEXT,
+        attivitaAssociata TEXT,
         idViaggio INTEGER NOT NULL,
         FOREIGN KEY (idViaggio) REFERENCES viaggi (id) ON DELETE CASCADE
       )

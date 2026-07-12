@@ -149,10 +149,8 @@ class _EditTripFieldState extends State<EditTripField> {
               child: ElevatedButton(
                 onPressed: () async {
                   dynamic nuovoValore;
-
                   if (isData) {
-                    if (_dataSelezionata == null) return;
-                    nuovoValore = _dataSelezionata;
+                    nuovoValore = _dataSelezionata ?? trip.dataInizio;
                   } else if (isNumero) {
                     nuovoValore = double.tryParse(_testoController.text.replaceAll(',', '.')) ?? trip.budgetPrevisto;
                   } else {

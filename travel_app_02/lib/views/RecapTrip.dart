@@ -306,7 +306,7 @@ class _RecapTripState extends State<RecapTrip> {
 
             ElevatedButton(
               onPressed: () async {
-                final nuovaSpesa = await Navigator.pushNamed(context, AppRoutes.newCost);
+                final nuovaSpesa = await Navigator.pushNamed(context, AppRoutes.newCost, arguments: widget.controller.trip);
                 if (nuovaSpesa != null && nuovaSpesa is Expense) {
                   setState(() {
                     widget.controller.aggiungiSpesa(nuovaSpesa);
@@ -449,6 +449,7 @@ class _RecapTripState extends State<RecapTrip> {
 
   // ---------- ELIMINA / MODIFICA VIAGGIO ----------
 
+  // Sostituisci il metodo _mostraConfermaEliminazioneViaggio con questo:
   void _mostraConfermaEliminazioneViaggio(BuildContext context) {
     final trip = widget.controller.trip;
     showDialog(
@@ -460,12 +461,7 @@ class _RecapTripState extends State<RecapTrip> {
           TextButton(
             onPressed: () async {
               Navigator.pop(dialogContext);
-              try {
-                await TripController().eliminaViaggio(trip.id);
-              } catch (e) {
-                _mostraErrore('Errore eliminando il viaggio: $e');
-                return;
-              }
+              await TripController().eliminaViaggio(trip.id);
               if (context.mounted) {
                 Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (route) => false);
               }
