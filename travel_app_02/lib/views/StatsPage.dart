@@ -53,7 +53,7 @@ class _StatsPageState extends State<StatsPage> {
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) {
           // Forziamo il ritorno alla Home
-          Navigator.pushReplacementNamed(context, AppRoutes.home);
+          Navigator.pop(context);
         }
       },
       child: Scaffold(
