@@ -75,7 +75,7 @@ class _AddCheckState extends State<AddCheck> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromRGBO(225, 170, 5, 1),
+      backgroundColor: Colors.amber, // Stesso giallo usato in tutte le altre pagine
       body: SafeArea(
         child: Stack(
           children: [
@@ -133,12 +133,23 @@ class _AddCheckState extends State<AddCheck> {
 
                   const SizedBox(height: 10),
 
-                  TextField(
-                    controller: _itemController,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    cursorColor: Colors.white,
-                    decoration: _buildInputDecoration('AGGIUNGI'),
-                    onSubmitted: (value) => _aggiungiElemento(value),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _itemController,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          cursorColor: Colors.white,
+                          decoration: _buildInputDecoration('AGGIUNGI'),
+                          onSubmitted: (value) => _aggiungiElemento(value),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      IconButton(
+                        onPressed: () => _aggiungiElemento(_itemController.text),
+                        icon: const Icon(Icons.add_circle, color: Colors.black, size: 32),
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 25),
@@ -175,7 +186,7 @@ class _AddCheckState extends State<AddCheck> {
                                   ),
                                   value: item['isChecked'],
                                   activeColor: Colors.black,
-                                  checkColor: const Color.fromRGBO(225, 170, 5, 1),
+                                  checkColor: Colors.amber,
                                   controlAffinity: ListTileControlAffinity.leading,
                                   onChanged: (bool? valoreNuovo) {
                                     setState(() {
@@ -192,10 +203,26 @@ class _AddCheckState extends State<AddCheck> {
 
                   ElevatedButton(
                     onPressed: () {
+                      // Se l'utente ha scritto un elemento ma non l'ha ancora confermato
+                      // (né con invio né con il pulsante +), lo aggiungiamo comunque:
+                      // altrimenti verrebbe perso silenziosamente.
+                      if (_itemController.text.trim().isNotEmpty) {
+                        _aggiungiElemento(_itemController.text);
+                      }
+
                       String titoloInserito = _titleController.text.trim();
                       if (titoloInserito.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Inserisci un titolo per la tua checklist!')),
+                        );
+                        return;
+                      }
+
+                      // Una checklist senza elementi non è una vera checklist:
+                      // richiediamo almeno un elemento prima di poter confermare.
+                      if (_elementiChecklist.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Aggiungi almeno un elemento alla checklist!')),
                         );
                         return;
                       }

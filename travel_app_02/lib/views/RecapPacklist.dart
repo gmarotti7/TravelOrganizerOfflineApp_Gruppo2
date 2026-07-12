@@ -105,19 +105,6 @@ class _RecapPacklistState extends State<RecapPacklist> {
           'RIEPILOGO PACKLIST',
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 20),
         ),
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.menu, color: Colors.black, size: 30),
-            onSelected: (valore) {
-              if (valore == 'elimina') _mostraConfermaEliminazione();
-              if (valore == 'modifica') _mostraRinominaPacklist();
-            },
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: 'modifica', child: Text('MODIFICA PACKLIST')),
-              PopupMenuItem(value: 'elimina', child: Text('ELIMINA PACKLIST')),
-            ],
-          ),
-        ],
       ),
       body: _caricamento
           ? const Center(child: CircularProgressIndicator())

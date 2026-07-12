@@ -12,6 +12,9 @@ class NewCost extends StatefulWidget {
 }
 
 class _NewCostState extends State<NewCost> {
+  // Key per il Form, serve per validare tutti i campi obbligatori prima di salvare
+  final _formKey = GlobalKey<FormState>();
+
   // Aggiungi questi controller sotto le altre tue variabili
   final _titoloController = TextEditingController();
   final _costoController = TextEditingController();
@@ -34,7 +37,10 @@ class _NewCostState extends State<NewCost> {
     final DateTime? dataSelezionata = await showDatePicker(
       context: context,
       initialDate: _viaggioSelezionato?.dataInizio ?? DateTime.now(), // Data di partenza
-      firstDate: _viaggioSelezionato?.dataInizio ?? DateTime(2000),   // Data minima
+      // Una spesa può essere segnata anche prima dell'inizio del viaggio
+      // (es. biglietti o prenotazioni pagate in anticipo), quindi non blocchiamo
+      // la data minima alla data di inizio del viaggio.
+      firstDate: DateTime(2000),
       lastDate: _viaggioSelezionato?.dataFine ?? DateTime(2100),    // Data massima
       // Personalizziamo i colori per farli abbinare al tuo tema Giallo/Nero!
       builder: (context, child) {
@@ -179,7 +185,9 @@ class _NewCostState extends State<NewCost> {
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
-          child: Column(
+          child: Form(
+            key: _formKey,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               
@@ -199,6 +207,7 @@ class _NewCostState extends State<NewCost> {
                         focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
                       ),
                       hint: const Text('. . .'),
+                      validator: (valore) => valore == null ? 'Obbligatorio' : null,
                       items: [
                         DropdownMenuItem(
                           value: 'Da pagare',
@@ -221,15 +230,26 @@ class _NewCostState extends State<NewCost> {
               // 2. DATA (GG/MM/AAAA)
               const Text('DATA', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
               const SizedBox(height: 5),
-              TextField(
+              TextFormField(
                 controller: _dataController,
                 keyboardType: TextInputType.datetime, // Mostra tastiera con numeri e simboli
+                validator: (valore) {
+                  if (valore == null || valore.trim().isEmpty) {
+                    return 'Seleziona la data della spesa';
+                  }
+                  if (!RegExp(r'^\d{2}/\d{2}/\d{4}$').hasMatch(valore.trim())) {
+                    return 'Data non valida (gg/mm/aaaa)';
+                  }
+                  return null;
+                },
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.white,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                   enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 2), borderRadius: BorderRadius.zero),
                   focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
+                  errorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red, width: 2), borderRadius: BorderRadius.zero),
+                  focusedErrorBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.red, width: 3), borderRadius: BorderRadius.zero),
                   hintText: "gg/mm/aaaa",
                   // Ecco l'icona magica che apre il calendario
                   suffixIcon: IconButton(
@@ -263,14 +283,22 @@ class _NewCostState extends State<NewCost> {
               // 4. TITOLO
               const Text('TITOLO', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
               const SizedBox(height: 5),
-              TextField(
+              TextFormField(
                 controller: _titoloController,
+                validator: (valore) {
+                  if (valore == null || valore.trim().isEmpty) {
+                    return 'Inserisci un titolo';
+                  }
+                  return null;
+                },
                 decoration: const InputDecoration(
                   filled: true,
                   fillColor: Colors.white,
                   contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                   enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 2), borderRadius: BorderRadius.zero),
                   focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
+                  errorBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.red, width: 2), borderRadius: BorderRadius.zero),
+                  focusedErrorBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.red, width: 3), borderRadius: BorderRadius.zero),
                 ),
               ),
               const SizedBox(height: 20),
@@ -307,6 +335,7 @@ class _NewCostState extends State<NewCost> {
                         focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
                       ),
                       hint: const Text('. . .'),
+                      validator: (valore) => valore == null ? 'Obbligatorio' : null,
                       items: const [
                         DropdownMenuItem(value: 'Contanti', child: Text('Contanti')),
                         DropdownMenuItem(value: 'Carta di credito', child: Text('Carta di credito')),
@@ -337,6 +366,7 @@ class _NewCostState extends State<NewCost> {
                         focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
                       ),
                       hint: const Text('. . .'),
+                      validator: (valore) => valore == null ? 'Obbligatorio' : null,
                       items: const [
                         DropdownMenuItem(value: 'Cibo e Bevande', child: Text('Cibo e Bevande')),
                         DropdownMenuItem(value: 'Trasporti', child: Text('Trasporti')),
@@ -392,18 +422,30 @@ class _NewCostState extends State<NewCost> {
                     child: Text('COSTO ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
                   ),
                   Expanded(
-                    child: TextField(
+                    child: TextFormField(
                       controller: _costoController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
                       ],
+                      validator: (valore) {
+                        if (valore == null || valore.trim().isEmpty) {
+                          return 'Inserisci il costo';
+                        }
+                        final numero = double.tryParse(valore.replaceAll(',', '.'));
+                        if (numero == null || numero <= 0) {
+                          return 'Costo non valido';
+                        }
+                        return null;
+                      },
                       decoration: const InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
                         contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                         enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 2), borderRadius: BorderRadius.zero),
                         focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
+                        errorBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.red, width: 2), borderRadius: BorderRadius.zero),
+                        focusedErrorBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.red, width: 3), borderRadius: BorderRadius.zero),
                       ),
                     ),
                   ),
@@ -438,16 +480,34 @@ class _NewCostState extends State<NewCost> {
               Center(
                 child: ElevatedButton(
                   onPressed: () {
+                    // Controlliamo prima tutti i campi obbligatori (Form + dropdown):
+                    // se manca qualcosa di fondamentale la spesa non viene creata.
+                    final formValido = _formKey.currentState!.validate();
+                    final erroreDropdown = _statoSelezionato == null ||
+                        _metodoPagamento == null ||
+                        _categoriaSelezionata == null;
+
+                    if (!formValido || erroreDropdown) {
+                      setState(() {}); // forza il refresh degli errori sui dropdown
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Compila tutti i campi obbligatori prima di confermare'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
                     // Logica di salvataggio
                     final nuovaSpesa = Expense(
                       id: DateTime.now().toString(), // ID univoco
-                      titolo: _titoloController.text.isEmpty ? 'Nuova Spesa' : _titoloController.text,
-                      importo: double.tryParse(_costoController.text.replaceAll(',', '.')) ?? 0.0,
-                      stato: _statoSelezionato ?? 'Da pagare',
-                      data: _dataController.text,
+                      titolo: _titoloController.text.trim(),
+                      importo: double.parse(_costoController.text.replaceAll(',', '.')),
+                      stato: _statoSelezionato!,
+                      data: _dataController.text.trim(),
                       descrizione: _descrizioneController.text,
-                      metodoPagamento: _metodoPagamento ?? 'Contanti',
-                      categoria: _categoriaSelezionata ?? 'Altro',
+                      metodoPagamento: _metodoPagamento!,
+                      categoria: _categoriaSelezionata!,
                       viaggioAssociato: _viaggioAssociatoController.text.isEmpty ? 'Nessuno' : _viaggioAssociatoController.text,
                       attivitaAssociata: _attivitaAssociataController.text.isEmpty ? 'Nessuna' : _attivitaAssociataController.text,
                     );
@@ -467,6 +527,7 @@ class _NewCostState extends State<NewCost> {
               
               const SizedBox(height: 20),
             ],
+            ),
           ),
         ),
       ),

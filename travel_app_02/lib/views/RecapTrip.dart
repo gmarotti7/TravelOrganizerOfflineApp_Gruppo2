@@ -93,7 +93,7 @@ class _RecapTripState extends State<RecapTrip> {
 
   @override
   Widget build(BuildContext context) {
-    const Color gialloSfondo = Color(0xFFFFB84D);
+    const Color gialloSfondo = Colors.amber;
     final trip = widget.controller.trip;
 
     return Scaffold(
@@ -211,7 +211,11 @@ class _RecapTripState extends State<RecapTrip> {
                   // PULSANTE AGGIUNGI TAPPA
                   OutlinedButton(
                     onPressed: () async {
-                      final risultato = await Navigator.pushNamed(context, AppRoutes.newStay);
+                      final risultato = await Navigator.pushNamed(
+                        context,
+                        AppRoutes.newStay,
+                        arguments: trip, // Serve a NewStay per limitare la data tra inizio e fine viaggio
+                      );
                       if (risultato != null && risultato is Stay) {
                         final idViaggio = int.tryParse(trip.id);
                         if (idViaggio == null) {

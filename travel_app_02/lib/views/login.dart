@@ -68,7 +68,7 @@ class _LoginState extends State<Login> {
         Sessione.idUtenteAttuale = utenteLoggato.id;
         
         if (context.mounted) {
-          Navigator.pushReplacementNamed(context, AppRoutes.home);
+          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (route) => false);
         }
       } else {
         setState(() {

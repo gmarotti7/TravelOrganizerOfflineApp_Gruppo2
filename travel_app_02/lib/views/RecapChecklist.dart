@@ -79,9 +79,11 @@ class _RecapChecklistState extends State<RecapChecklist> {
           PopupMenuButton<String>(
             icon: const Icon(Icons.menu, color: Colors.black, size: 30),
             onSelected: (valore) {
+              if (valore == 'modifica_titolo') _mostraRinominaChecklist();
               if (valore == 'elimina') _mostraConfermaEliminazione();
             },
             itemBuilder: (context) => const [
+              PopupMenuItem(value: 'modifica_titolo', child: Text('MODIFICA TITOLO')),
               PopupMenuItem(value: 'elimina', child: Text('ELIMINA CHECKLIST')),
             ],
           ),
@@ -122,6 +124,17 @@ class _RecapChecklistState extends State<RecapChecklist> {
                                       fontWeight: FontWeight.bold,
                                       decoration: completato ? TextDecoration.lineThrough : TextDecoration.none,
                                     ),
+                                  ),
+                                  secondary: PopupMenuButton<String>(
+                                    icon: const Icon(Icons.more_vert, color: Colors.black54),
+                                    onSelected: (valore) {
+                                      if (valore == 'modifica') _mostraModificaElemento(item);
+                                      if (valore == 'elimina') _confermaEliminaElemento(item);
+                                    },
+                                    itemBuilder: (context) => const [
+                                      PopupMenuItem(value: 'modifica', child: Text('MODIFICA')),
+                                      PopupMenuItem(value: 'elimina', child: Text('ELIMINA')),
+                                    ],
                                   ),
                                   value: completato,
                                   activeColor: Colors.black,

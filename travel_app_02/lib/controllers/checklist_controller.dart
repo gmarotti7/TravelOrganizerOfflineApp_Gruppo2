@@ -63,4 +63,32 @@ class ChecklistController {
       whereArgs: [idChecklist],
     );
   }
+
+  // Aggiunge un nuovo elemento a una checklist già esistente
+  Future<int> aggiungiElemento(int idChecklist, String nomeItem) async {
+    return DatabaseHelper.instance.insert('checklist_items', {
+      'nomeItem': nomeItem,
+      'isCompletato': 0,
+      'idChecklist': idChecklist,
+    });
+  }
+
+  // Modifica il nome di un singolo elemento della checklist
+  Future<void> aggiornaNomeElemento(int idItem, String nuovoNome) async {
+    await DatabaseHelper.instance.update(
+      'checklist_items',
+      {'nomeItem': nuovoNome},
+      where: 'id = ?',
+      whereArgs: [idItem],
+    );
+  }
+
+  // Elimina un singolo elemento dalla checklist
+  Future<void> eliminaElemento(int idItem) async {
+    await DatabaseHelper.instance.delete(
+      'checklist_items',
+      where: 'id = ?',
+      whereArgs: [idItem],
+    );
+  }
 }
