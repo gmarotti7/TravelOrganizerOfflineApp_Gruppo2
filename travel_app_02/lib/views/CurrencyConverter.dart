@@ -107,7 +107,7 @@ class _CurrencyConverterState extends State<CurrencyConverter> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black, size: 30),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.home),
         ),
         centerTitle: true,
         title: const Text(
