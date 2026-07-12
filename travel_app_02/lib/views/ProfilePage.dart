@@ -5,6 +5,7 @@ import 'package:travel_app_02/sessione.dart';
 import 'package:travel_app_02/models/utente.dart';
 import 'package:travel_app_02/controllers/profile_controller.dart';
 import 'BottomBar.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -16,6 +17,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final ProfileController _profileController = ProfileController();
   late Future<Utente?> _futureUtente;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -36,6 +38,13 @@ class _ProfilePageState extends State<ProfilePage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            ListTile(
+              title: const Text('Foto Profilo'),
+              onTap: () {
+                Navigator.pop(context);
+                _mostraMenuSceltaFoto(utente);
+              },
+            ),
             ListTile(
               title: const Text('Username'),
               onTap: () => _apriModificaCampo(context, utente, 'username', 'Username'),
@@ -77,6 +86,65 @@ class _ProfilePageState extends State<ProfilePage> {
       setState(() {
         _caricaUtente();
       });
+    }
+  }
+  
+  void _mostraMenuSceltaFoto(Utente utente) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.black,
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: Colors.amber),
+              title: const Text('Scegli dalla Galleria', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.of(context).pop();
+                _scegliImmagine(ImageSource.gallery, utente);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Colors.amber),
+              title: const Text('Scatta una Foto', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.of(context).pop();
+                _scegliImmagine(ImageSource.camera, utente);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _scegliImmagine(ImageSource sorgente, Utente utente) async {
+    final XFile? immagine = await _picker.pickImage(source: sorgente);
+    
+    if (immagine != null) {
+      try {
+        // Salva il nuovo percorso dell'immagine nel database
+        await _profileController.aggiornaCampoUtente(utente.id!, 'fotoProfilo', immagine.path);
+        
+        if (mounted) {
+          // Ricarica l'utente e aggiorna la pagina in tempo reale
+          setState(() {
+            _caricaUtente();
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Foto profilo aggiornata!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Errore durante il salvataggio: $e'), backgroundColor: Colors.red),
+          );
+        }
+      }
     }
   }
 
