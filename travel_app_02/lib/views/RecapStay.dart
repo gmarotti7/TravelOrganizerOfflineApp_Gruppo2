@@ -3,6 +3,7 @@ import 'package:travel_app_02/models/stay.dart';
 import 'package:travel_app_02/controllers/stay_controller.dart';
 import 'EditStayField.dart';
 import 'BottomBar.dart';
+import 'package:travel_app_02/sessione.dart';
 
 class RecapStay extends StatelessWidget {
   const RecapStay({Key? key}) : super(key: key);
@@ -152,7 +153,7 @@ class RecapStay extends StatelessWidget {
               _buildRecapItem('DATA', tappaPassata.data.isEmpty ? 'Non specificata' : tappaPassata.data),
               _buildRecapItem('ORA', tappaPassata.ora.isEmpty ? 'Non specificata' : tappaPassata.ora),
               _buildRecapItem('TITOLO', tappaPassata.titolo),
-              _buildRecapItem('COSTO PREVISTO', '${tappaPassata.costoPrevisto.toStringAsFixed(2)} EUR'),
+              _buildRecapItem('COSTO PREVISTO', '${tappaPassata.costoPrevisto.toStringAsFixed(2)} ${Sessione.valutaAttuale}'),
               const SizedBox(height: 10),
               const Text(
                 'DESCRIZIONE:',

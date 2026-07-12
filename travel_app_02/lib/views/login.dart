@@ -66,6 +66,7 @@ class _LoginState extends State<Login> {
         });
         
         Sessione.idUtenteAttuale = utenteLoggato.id;
+        Sessione.valutaAttuale = utenteLoggato.valuta;
         
         if (context.mounted) {
           Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (route) => false);

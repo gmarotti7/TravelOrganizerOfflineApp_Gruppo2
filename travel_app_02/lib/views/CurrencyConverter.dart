@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'BottomBar.dart'; // La tua barra di navigazione inferiore
+import 'BottomBar.dart';
+import 'package:travel_app_02/sessione.dart';
 
 class CurrencyConverter extends StatefulWidget {
   const CurrencyConverter({Key? key}) : super(key: key);
@@ -15,7 +16,7 @@ class _CurrencyConverterState extends State<CurrencyConverter> {
   final TextEditingController _valutaLocaleController = TextEditingController();
 
   // Valute selezionate nei menu a tendina
-  String _tuaValuta = 'EUR';
+  late String _tuaValuta = Sessione.valutaAttuale;
   String _valutaLocale = 'USD';
 
   // Lista delle valute disponibili
