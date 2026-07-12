@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:travel_app_02/models/utente.dart';
 import 'package:travel_app_02/controllers/profile_controller.dart';
 import 'BottomBar.dart';
+import 'package:travel_app_02/sessione.dart';
 
 class EditProfileField extends StatefulWidget {
   const EditProfileField({Key? key}) : super(key: key);
@@ -153,6 +154,9 @@ class _EditProfileFieldState extends State<EditProfileField> {
 
                   try {
                     await _profileController.aggiornaCampoUtente(utente.id!, campo, nuovoValore);
+                    if (campo == 'valuta') {
+                      Sessione.valutaAttuale = nuovoValore; // <-- AGGIUNTA: Aggiorna la valuta globale se modificata
+                    }
                     if (context.mounted) {
                       // Per la password non rimandiamo indietro il valore in chiaro.
                       Navigator.pop(context, {'campo': campo, 'valore': isPassword ? null : nuovoValore});

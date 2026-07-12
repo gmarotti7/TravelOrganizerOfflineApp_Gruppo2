@@ -11,6 +11,7 @@ import 'package:travel_app_02/models/expense.dart';
 import 'package:travel_app_02/models/stay.dart';
 import 'package:travel_app_02/models/trip.dart';
 import 'package:travel_app_02/route.dart';
+import 'package:travel_app_02/sessione.dart';
 
 class RecapTrip extends StatefulWidget {
   final RecTripController controller;
@@ -110,7 +111,7 @@ class _RecapTripState extends State<RecapTrip> {
   }
 
   String _formatValuta(double importo) {
-    return NumberFormat.currency(locale: 'it_IT', symbol: '€').format(importo);
+    return NumberFormat.currency(locale: 'it_IT', symbol: Sessione.valutaAttuale).format(importo);
   }
 
   @override

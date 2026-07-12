@@ -3,6 +3,7 @@ import 'package:travel_app_02/models/expense.dart';
 import 'package:travel_app_02/controllers/cost_controller.dart';
 import 'EditCostField.dart';
 import 'BottomBar.dart';
+import 'package:travel_app_02/sessione.dart';
 
 class RecapCost extends StatefulWidget {
   const RecapCost({Key? key}) : super(key: key);
@@ -169,7 +170,7 @@ class _RecapCostState extends State<RecapCost> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildRecapItem('TITOLO', spesaPassata.titolo),
-                _buildRecapItem('IMPORTO', '${spesaPassata.importo.toStringAsFixed(2)} ${spesaPassata.valuta ?? 'EUR'}'),
+                _buildRecapItem('IMPORTO', '${spesaPassata.importo.toStringAsFixed(2)} ${spesaPassata.valuta ?? Sessione.valutaAttuale}'),
                 _buildRecapItem('STATO', spesaPassata.stato ?? 'Non specificato'),
                 _buildRecapItem('DATA', spesaPassata.data ?? 'Non specificata'),
                 _buildRecapItem('METODO DI PAGAMENTO', spesaPassata.metodoPagamento ?? 'Non specificato'),

@@ -4,6 +4,7 @@ import 'NewStay.dart';
 import 'package:travel_app_02/models/stay.dart';
 import 'package:travel_app_02/models/trip.dart';
 import 'package:travel_app_02/controllers/trip_controller.dart';
+import 'package:travel_app_02/sessione.dart';
 
 class AddTrip extends StatefulWidget {
   const AddTrip({super.key});
@@ -46,7 +47,7 @@ class _AddTripState extends State<AddTrip> {
   final List<Stay> _tappeAggiunte = [];
   final List<Map<String, dynamic>> _checklistPersonalizzate = [];
 
-  final String _valutaScelta = '€';
+  late String _valutaScelta = Sessione.valutaAttuale;
 
   @override
   void dispose() {
