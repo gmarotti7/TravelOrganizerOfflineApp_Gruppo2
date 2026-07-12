@@ -30,6 +30,7 @@ class _RecapTripState extends State<RecapTrip> {
   final ChecklistController _checklistController = ChecklistController();
   final PackController _packController = PackController();
   final CostController _costController = CostController();
+  String? _valutaTotaleSelezionata;
 
   List<Stay> _tappe = [];
   bool _caricamentoTappe = true;
@@ -37,6 +38,14 @@ class _RecapTripState extends State<RecapTrip> {
 
   Map<String, dynamic>? _checklist; // {id, titolo} oppure null se non esiste ancora
   Map<String, dynamic>? _packlist;
+
+  final Map<String, double> _tassiDiCambio = {
+    'EUR': 1.0,
+    'USD': 1.10,
+    'GBP': 0.85,
+    'JPY': 160.0,
+    'CHF': 0.95,
+  };
 
   @override
   void initState() {
@@ -69,6 +78,27 @@ class _RecapTripState extends State<RecapTrip> {
       setState(() => _caricamentoSpese = false);
       _mostraErrore('Errore caricando le spese: $e');
     }
+  }
+
+  double _calcolaSpeseTotaliConvertite(String valutaTarget) {
+    double totale = 0.0;
+    for (var spesa in widget.controller.trip.spese) {
+      String valutaSpesa = spesa.valuta ?? Sessione.valutaAttuale;
+      
+      if (valutaSpesa == valutaTarget) {
+        totale += spesa.importo;
+      } else {
+        // Converte in Euro e poi nella valuta Target
+        double inEuro = spesa.importo / (_tassiDiCambio[valutaSpesa] ?? 1.0);
+        totale += inEuro * (_tassiDiCambio[valutaTarget] ?? 1.0);
+      }
+    }
+    return totale;
+  }
+
+  Color _getSpeseTotaliColor() {
+    double totaleInValutaUtente = _calcolaSpeseTotaliConvertite(Sessione.valutaAttuale);
+    return totaleInValutaUtente > widget.controller.trip.budgetPrevisto ? Colors.red : Colors.green;
   }
 
   Future<void> _caricaTappe() async {
@@ -110,8 +140,8 @@ class _RecapTripState extends State<RecapTrip> {
     );
   }
 
-  String _formatValuta(double importo) {
-    return NumberFormat.currency(locale: 'it_IT', symbol: Sessione.valutaAttuale).format(importo);
+  String _formatValuta(double importo, {String? valutaSpecifica}) {
+    return NumberFormat.currency(locale: 'it_IT', symbol: valutaSpecifica ?? Sessione.valutaAttuale).format(importo);
   }
 
   @override
@@ -316,11 +346,44 @@ class _RecapTripState extends State<RecapTrip> {
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       Text(
-                        _formatValuta(widget.controller.speseTotali),
+                        _formatValuta(
+                          _calcolaSpeseTotaliConvertite(_valutaTotaleSelezionata ?? Sessione.valutaAttuale),
+                          valutaSpecifica: _valutaTotaleSelezionata ?? Sessione.valutaAttuale,
+                        ),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: widget.controller.speseTotaliColor,
+                          color: _getSpeseTotaliColor(),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.shade300,
+                          borderRadius: BorderRadius.circular(5),
+                          border: Border.all(color: Colors.black, width: 1.5),
+                        ),
+                        child: DropdownButton<String>(
+                          value: _valutaTotaleSelezionata ?? Sessione.valutaAttuale,
+                          underline: const SizedBox(),
+                          icon: const Icon(Icons.arrow_drop_down, color: Colors.black),
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 14),
+                          isDense: true,
+                          items: ['EUR', 'USD', 'GBP', 'JPY', 'CHF'].map((String valuta) {
+                            return DropdownMenuItem<String>(
+                              value: valuta,
+                              child: Text(valuta),
+                            );
+                          }).toList(),
+                          onChanged: (nuovaValuta) {
+                            if (nuovaValuta != null) {
+                              setState(() {
+                                _valutaTotaleSelezionata = nuovaValuta;
+                              });
+                            }
+                          },
                         ),
                       ),
                     ],
@@ -418,7 +481,7 @@ class _RecapTripState extends State<RecapTrip> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text("- ${spesa.titolo}", style: const TextStyle(fontWeight: FontWeight.w500)),
-                              Text(_formatValuta(spesa.importo), style: const TextStyle(fontWeight: FontWeight.bold)),
+                              Text(_formatValuta(spesa.importo, valutaSpecifica: spesa.valuta), style: const TextStyle(fontWeight: FontWeight.bold)),
                             ],
                           ),
                         ),
