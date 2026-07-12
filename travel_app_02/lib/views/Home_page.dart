@@ -25,11 +25,11 @@ class _HomePageState extends State<HomePage> {
   DateTime? _selectedDate;
 
   // Lista simulata di viaggi (Database temporaneo)
+  // Lista simulata di viaggi (Database temporaneo per presentazione)
   final List<Trip> _tuttiIViaggi = [
-    Trip(titolo: 'Vacanze Estive', luogo: 'Barcellona', dataInizio: DateTime(2026, 08, 15), id: '0001', dataFine: DateTime(2026, 08, 22), budgetPrevisto: 500),
-    Trip(titolo: 'Capodanno a Londra', luogo: 'Londra', dataInizio: DateTime(2027, 01, 01), id: '002', dataFine: DateTime(2027, 01, 08), budgetPrevisto: 700),
-    Trip(titolo: 'Laurea Amo', luogo: 'Salerno', dataInizio: DateTime(2026, 03, 10), id: '0003', dataFine: DateTime(2026, 03, 18), budgetPrevisto: 400),
-    Trip(titolo: 'Weekend Romantico', luogo: 'Parigi', dataInizio: DateTime(2025, 12, 25), id: '0004', dataFine: DateTime(2025, 12, 29), budgetPrevisto: 500),
+    Trip(titolo: 'Vacanze Romane', luogo: 'Roma', dataInizio: DateTime(2026, 07, 01), id: '0001', dataFine: DateTime(2026, 07, 09), budgetPrevisto: 500), // Terminato 3 giorni fa (Rosso)
+    Trip(titolo: 'Vacanze Estive', luogo: 'Barcellona', dataInizio: DateTime(2026, 07, 10), id: '0002', dataFine: DateTime(2026, 07, 20), budgetPrevisto: 800), // In corso (Giallo)
+    Trip(titolo: 'Weekend in Montagna', luogo: 'Trento', dataInizio: DateTime(2026, 07, 22), id: '0003', dataFine: DateTime(2026, 07, 31), budgetPrevisto: 400), // Futuro (Verde)
   ];
 
   // Lista che contiene i viaggi filtrati da mostrare sulla UI
@@ -51,14 +51,35 @@ class _HomePageState extends State<HomePage> {
   Future<void> _caricaDatiDalDatabase() async {
     if (Sessione.idUtenteAttuale != null) {
       try {
-        final viaggiDb = await _controller.caricaViaggiUtente(Sessione.idUtenteAttuale!);
+        List<Trip> viaggiDb = await _controller.caricaViaggiUtente(Sessione.idUtenteAttuale!);
       
+        bool haViaggiDiProva = viaggiDb.any((v) => v.titolo == 'Vacanze Romane');
+
+        if (!haViaggiDiProva) {
+          await _controller.salvaNuovoViaggio(
+            Trip(id: '', titolo: 'Vacanze Romane', luogo: 'Roma', dataInizio: DateTime(2026, 07, 01), dataFine: DateTime(2026, 07, 09), budgetPrevisto: 500),
+            Sessione.idUtenteAttuale!
+          );
+          await _controller.salvaNuovoViaggio(
+            Trip(id: '', titolo: 'Vacanze Estive', luogo: 'Barcellona', dataInizio: DateTime(2026, 07, 10), dataFine: DateTime(2026, 07, 20), budgetPrevisto: 800),
+            Sessione.idUtenteAttuale!
+          );
+          await _controller.salvaNuovoViaggio(
+            Trip(id: '', titolo: 'Weekend in Montagna', luogo: 'Trento', dataInizio: DateTime(2026, 07, 22), dataFine: DateTime(2026, 07, 31), budgetPrevisto: 400),
+            Sessione.idUtenteAttuale!
+          );
+          viaggiDb = await _controller.caricaViaggiUtente(Sessione.idUtenteAttuale!);
+        }
+
         if (!mounted) return;
+
 
         setState(() {
           _tuttiIViaggi.clear();
-          _tuttiIViaggi.addAll(viaggiDb);
+          _tuttiIViaggi.addAll(viaggiDb); 
+
           _viaggiFiltrati = List.from(_tuttiIViaggi);
+          _applicaFiltri(); 
         });
       } catch (e) {
         debugPrint("Errore caricamento DB: $e");
@@ -250,7 +271,18 @@ class _HomePageState extends State<HomePage> {
                           }
 
                           final viaggio = _viaggiFiltrati[index];
-                          bool isFuturo = viaggio.dataInizio.isAfter(oggi);
+                          DateTime soloDataOggi = DateTime(oggi.year, oggi.month, oggi.day);
+                          DateTime inizio = DateTime(viaggio.dataInizio.year, viaggio.dataInizio.month, viaggio.dataInizio.day);
+                          DateTime fine = DateTime(viaggio.dataFine.year, viaggio.dataFine.month, viaggio.dataFine.day);
+
+                          Color coloreStato;
+                          if (soloDataOggi.isBefore(inizio)) {
+                            coloreStato = Colors.green;
+                          } else if (soloDataOggi.isAfter(fine)) {
+                            coloreStato = Colors.red;
+                          } else {
+                            coloreStato = Colors.amber;
+                          }
 
                           return Container(
                             margin: const EdgeInsets.only(bottom: 15),
@@ -273,7 +305,7 @@ class _HomePageState extends State<HomePage> {
                                       width: 14,
                                       height: 14,
                                       decoration: BoxDecoration(
-                                        color: isFuturo ? Colors.green : Colors.red,
+                                        color: coloreStato,
                                         shape: BoxShape.circle,
                                         border: Border.all(color: Colors.black, width: 1),
                                       ),
