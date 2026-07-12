@@ -144,7 +144,7 @@ class _StatsPageState extends State<StatsPage> {
                         children: [
                           const Icon(Icons.calendar_today, color: Colors.white, size: 30),
                           Text(
-                            '${stats.costoMedioGiornaliero.toStringAsFixed(2)} EUR / giorno',
+                            '${stats.costoMedioGiornaliero.toStringAsFixed(2)} ${Sessione.valutaAttuale} / giorno',
                             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
                           ),
                         ],
@@ -353,7 +353,7 @@ class _StatsPageState extends State<StatsPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(etichetta, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            Text('${valore.toStringAsFixed(2)} €', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text('${valore.toStringAsFixed(2)} ${Sessione.valutaAttuale}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ],
         ),
         const SizedBox(height: 5),

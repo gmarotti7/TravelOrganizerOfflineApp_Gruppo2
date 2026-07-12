@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:travel_app_02/models/expense.dart';
 import 'package:travel_app_02/models/trip.dart';
 import 'BottomBar.dart';
+import 'package:travel_app_02/sessione.dart';
 
 class NewCost extends StatefulWidget {
   const NewCost({Key? key}) : super(key: key);
@@ -25,7 +26,7 @@ class _NewCostState extends State<NewCost> {
   Trip? _viaggioSelezionato;
   String? _statoSelezionato;
   String? _metodoPagamento;
-  String _valutaSelezionata = 'EUR';
+  late String _valutaSelezionata = Sessione.valutaAttuale;
 
   String? _erroreOra;
 
