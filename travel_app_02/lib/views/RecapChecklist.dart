@@ -30,7 +30,8 @@ class _RecapChecklistState extends State<RecapChecklist> {
   Future<void> _caricaElementi() async {
     final elementi = await _controller.caricaElementi(_idChecklist);
     setState(() {
-      _elementi = elementi;
+      // Creiamo una copia modificabile di ogni singola mappa restituita dal database
+      _elementi = elementi.map((e) => Map<String, dynamic>.from(e)).toList();
       _caricamento = false;
     });
   }
