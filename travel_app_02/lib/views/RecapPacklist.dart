@@ -30,7 +30,7 @@ class _RecapPacklistState extends State<RecapPacklist> {
   Future<void> _caricaElementi() async {
     final elementi = await _controller.caricaElementi(_idPacklist);
     setState(() {
-      _elementi = elementi;
+      _elementi = elementi.map((e) => Map<String, dynamic>.from(e)).toList();
       _caricamento = false;
     });
   }
@@ -131,7 +131,10 @@ class _RecapPacklistState extends State<RecapPacklist> {
                                     try {
                                       await _controller.aggiornaStatoElemento(item['id'] as int, nuovoValore ?? false);
                                       setState(() {
-                                        item['isImballato'] = (nuovoValore ?? false) ? 1 : 0;
+                                        _elementi[index] = {
+                                          ...item,
+                                          'isImballato': (nuovoValore ?? false) ? 1 : 0,
+                                        };
                                       });
                                     } catch (e) {
                                       if (context.mounted) {
