@@ -281,7 +281,7 @@ class _HomePageState extends State<HomePage> {
                           } else if (soloDataOggi.isAfter(fine)) {
                             coloreStato = Colors.red;
                           } else {
-                            coloreStato = Colors.amber;
+                            coloreStato = Colors.yellowAccent;
                           }
 
                           return Container(
