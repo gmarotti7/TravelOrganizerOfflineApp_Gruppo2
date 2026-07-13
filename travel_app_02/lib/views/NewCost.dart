@@ -144,7 +144,7 @@ class _NewCostState extends State<NewCost> {
     return Scaffold(
       backgroundColor: Colors.amber,
       appBar: AppBar(
-        backgroundColor: Colors.amber,
+        backgroundColor: const Color.fromRGBO(255, 193, 7, 1),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black, size: 30),

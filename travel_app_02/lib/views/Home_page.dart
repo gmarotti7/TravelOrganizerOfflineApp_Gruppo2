@@ -24,25 +24,25 @@ class _HomePageState extends State<HomePage> {
   // Data selezionata tramite il calendario (null se nessun filtro data è attivo)
   DateTime? _selectedDate;
 
-  // Lista simulata di viaggi (Database temporaneo)
   // Lista simulata di viaggi (Database temporaneo per presentazione)
   final List<Trip> _tuttiIViaggi = [
-    Trip(titolo: 'Vacanze Romane', luogo: 'Roma', dataInizio: DateTime(2026, 07, 01), id: '0001', dataFine: DateTime(2026, 07, 09), budgetPrevisto: 500), // Terminato 3 giorni fa (Rosso)
-    Trip(titolo: 'Vacanze Estive', luogo: 'Barcellona', dataInizio: DateTime(2026, 07, 10), id: '0002', dataFine: DateTime(2026, 07, 20), budgetPrevisto: 800), // In corso (Giallo)
-    Trip(titolo: 'Weekend in Montagna', luogo: 'Trento', dataInizio: DateTime(2026, 07, 22), id: '0003', dataFine: DateTime(2026, 07, 31), budgetPrevisto: 400), // Futuro (Verde)
+    Trip(titolo: 'Vacanze Romane', luogo: 'Roma', dataInizio: DateTime(2026, 07, 01), id: '0001', dataFine: DateTime(2026, 07, 09), budgetPrevisto: 500), 
+    Trip(titolo: 'Vacanze Estive', luogo: 'Barcellona', dataInizio: DateTime(2026, 07, 10), id: '0002', dataFine: DateTime(2026, 07, 20), budgetPrevisto: 800), 
+    Trip(titolo: 'Weekend in Montagna', luogo: 'Trento', dataInizio: DateTime(2026, 07, 22), id: '0003', dataFine: DateTime(2026, 07, 31), budgetPrevisto: 400), 
   ];
 
   // Lista che contiene i viaggi filtrati da mostrare sulla UI
   List<Trip> _viaggiFiltrati = [];
 
   final TripController _controller = TripController();
+  
   @override
   void initState() {
     super.initState();
-  // Inizializza subito la lista filtrata con i dati mock di default
+    // Inizializza subito la lista filtrata con i dati mock di default
     _viaggiFiltrati = List.from(_tuttiIViaggi);
 
-  // Aspetta che l'interfaccia sia pronta prima di caricare dal Database
+    // Aspetta che l'interfaccia sia pronta prima di caricare dal Database
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _caricaDatiDalDatabase();
     });
@@ -73,7 +73,6 @@ class _HomePageState extends State<HomePage> {
 
         if (!mounted) return;
 
-
         setState(() {
           _tuttiIViaggi.clear();
           _tuttiIViaggi.addAll(viaggiDb); 
@@ -101,14 +100,12 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  // Funzione unica che unisce il filtro testuale e il filtro data
   void _applicaFiltri() {
     String query = _searchController.text.toLowerCase().trim();
     DateTime oggi = DateTime.now();
 
     setState(() {
       _viaggiFiltrati = _tuttiIViaggi.where((viaggio) {
-        // CORRETTO: Sostituito viaggio.data con viaggio.dataInizio
         String statoViaggio = viaggio.dataInizio.isAfter(oggi) ? 'da fare' : 'passato';
 
         // 1. Controllo Filtro Testuale
@@ -129,7 +126,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // Funzione per aprire il DatePicker nativo di Flutter
   Future<void> _selezionaData(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -162,7 +158,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Funzione per resettare il filtro della data
   void _rimuoviFiltroData() {
     setState(() {
       _selectedDate = null;
@@ -175,7 +170,7 @@ class _HomePageState extends State<HomePage> {
     DateTime oggi = DateTime.now();
 
     return Scaffold(
-      backgroundColor: const Color.fromRGBO(225, 170, 5, 1), // Giallo ocra
+      backgroundColor: const Color.fromRGBO(225, 193, 7, 1), // Giallo ocra
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
@@ -205,7 +200,8 @@ class _HomePageState extends State<HomePage> {
                 decoration: InputDecoration(
                   fillColor: Colors.white,
                   filled: true,
-                  hintText: 'LUOGO, DATA, STATO',
+                  // MODIFICATO: Testo del placeholder aggiornato qui sotto
+                  hintText: 'TITOLO, DESTINAZIONE, DATA',
                   hintStyle: const TextStyle(color: Colors.black45, fontWeight: FontWeight.w500),
                   prefixIcon: const Icon(Icons.search, color: Colors.black),
                   suffixIcon: IconButton(
@@ -233,7 +229,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
 
-              // Indicatore filtro data attivo
               if (_selectedDate != null) ...[
                 const SizedBox(height: 5),
                 Text(
@@ -289,7 +284,7 @@ class _HomePageState extends State<HomePage> {
                             child: InkWell(
                               onTap: () {
                                 debugPrint("Cliccato sul viaggio: ${viaggio.titolo}");
-                                Navigator.pushNamed(context, AppRoutes.riepilogoViaggio, arguments: viaggio); //Appena modificat
+                                Navigator.pushNamed(context, AppRoutes.riepilogoViaggio, arguments: viaggio);
                               },
                               borderRadius: BorderRadius.circular(5),
                               child: Ink(

@@ -1,14 +1,14 @@
 import 'package:travel_app_02/services/database_helper.dart';
 
 class ChecklistController {
-  // Restituisce la checklist del viaggio (se esiste). Un viaggio ne ha al massimo una.
-  Future<Map<String, dynamic>?> caricaChecklistViaggio(int idViaggio) async {
+  // MODIFICA: Ora restituisce TUTTE le checklist associate al viaggio sotto forma di lista
+  Future<List<Map<String, dynamic>>> caricaChecklistViaggio(int idViaggio) async {
     final righe = await DatabaseHelper.instance.queryAllRows(
       'checklist',
       where: 'idViaggio = ?',
       whereArgs: [idViaggio],
     );
-    return righe.isEmpty ? null : righe.first;
+    return righe; // Restituisce l'intera lista di righe trovate senza fermarsi alla prima
   }
 
   Future<List<Map<String, dynamic>>> caricaElementi(int idChecklist) async {
