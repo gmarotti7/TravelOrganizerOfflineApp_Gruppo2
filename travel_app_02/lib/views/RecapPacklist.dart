@@ -62,9 +62,9 @@ class _RecapPacklistState extends State<RecapPacklist> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.amber,
+      backgroundColor: Color.fromRGBO(255, 193, 7, 1),
       appBar: AppBar(
-        backgroundColor: Colors.amber,
+        backgroundColor: Color.fromRGBO(255, 193, 7, 1),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black, size: 30),
@@ -125,7 +125,7 @@ class _RecapPacklistState extends State<RecapPacklist> {
                                   ),
                                   value: imballato,
                                   activeColor: Colors.black,
-                                  checkColor: Colors.amber,
+                                  checkColor: Color.fromRGBO(255, 193, 7, 1),
                                   controlAffinity: ListTileControlAffinity.leading,
                                   onChanged: (bool? nuovoValore) async {
                                     try {

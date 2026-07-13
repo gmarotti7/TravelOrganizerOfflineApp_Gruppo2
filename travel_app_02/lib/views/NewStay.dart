@@ -45,7 +45,7 @@ class _NewStayState extends State<NewStay> {
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
               primary: Colors.black,
-              onPrimary: Colors.amber,
+              onPrimary: Color.fromRGBO(255, 193, 7, 1),
               onSurface: Colors.black,
             ),
             textButtonTheme: TextButtonThemeData(

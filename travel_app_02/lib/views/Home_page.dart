@@ -24,25 +24,25 @@ class _HomePageState extends State<HomePage> {
   // Data selezionata tramite il calendario (null se nessun filtro data è attivo)
   DateTime? _selectedDate;
 
-  // Lista simulata di viaggi (Database temporaneo)
+  // Lista simulata di viaggi (Database temporaneo per presentazione)
   final List<Trip> _tuttiIViaggi = [
-    Trip(titolo: 'Vacanze Estive', luogo: 'Barcellona', dataInizio: DateTime(2026, 08, 15), id: '0001', dataFine: DateTime(2026, 08, 22), budgetPrevisto: 500),
-    Trip(titolo: 'Capodanno a Londra', luogo: 'Londra', dataInizio: DateTime(2027, 01, 01), id: '002', dataFine: DateTime(2027, 01, 08), budgetPrevisto: 700),
-    Trip(titolo: 'Laurea Amo', luogo: 'Salerno', dataInizio: DateTime(2026, 03, 10), id: '0003', dataFine: DateTime(2026, 03, 18), budgetPrevisto: 400),
-    Trip(titolo: 'Weekend Romantico', luogo: 'Parigi', dataInizio: DateTime(2025, 12, 25), id: '0004', dataFine: DateTime(2025, 12, 29), budgetPrevisto: 500),
+    Trip(titolo: 'Vacanze Romane', luogo: 'Roma', dataInizio: DateTime(2026, 07, 01), id: '0001', dataFine: DateTime(2026, 07, 09), budgetPrevisto: 500), 
+    Trip(titolo: 'Vacanze Estive', luogo: 'Barcellona', dataInizio: DateTime(2026, 07, 10), id: '0002', dataFine: DateTime(2026, 07, 20), budgetPrevisto: 800), 
+    Trip(titolo: 'Weekend in Montagna', luogo: 'Trento', dataInizio: DateTime(2026, 07, 22), id: '0003', dataFine: DateTime(2026, 07, 31), budgetPrevisto: 400), 
   ];
 
   // Lista che contiene i viaggi filtrati da mostrare sulla UI
   List<Trip> _viaggiFiltrati = [];
 
   final TripController _controller = TripController();
+  
   @override
   void initState() {
     super.initState();
-  // Inizializza subito la lista filtrata con i dati mock di default
+    // Inizializza subito la lista filtrata con i dati mock di default
     _viaggiFiltrati = List.from(_tuttiIViaggi);
 
-  // Aspetta che l'interfaccia sia pronta prima di caricare dal Database
+    // Aspetta che l'interfaccia sia pronta prima di caricare dal Database
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _caricaDatiDalDatabase();
     });
@@ -51,14 +51,34 @@ class _HomePageState extends State<HomePage> {
   Future<void> _caricaDatiDalDatabase() async {
     if (Sessione.idUtenteAttuale != null) {
       try {
-        final viaggiDb = await _controller.caricaViaggiUtente(Sessione.idUtenteAttuale!);
+        List<Trip> viaggiDb = await _controller.caricaViaggiUtente(Sessione.idUtenteAttuale!);
       
+        bool haViaggiDiProva = viaggiDb.any((v) => v.titolo == 'Vacanze Romane');
+
+        if (!haViaggiDiProva) {
+          await _controller.salvaNuovoViaggio(
+            Trip(id: '', titolo: 'Vacanze Romane', luogo: 'Roma', dataInizio: DateTime(2026, 07, 01), dataFine: DateTime(2026, 07, 09), budgetPrevisto: 500),
+            Sessione.idUtenteAttuale!
+          );
+          await _controller.salvaNuovoViaggio(
+            Trip(id: '', titolo: 'Vacanze Estive', luogo: 'Barcellona', dataInizio: DateTime(2026, 07, 10), dataFine: DateTime(2026, 07, 20), budgetPrevisto: 800),
+            Sessione.idUtenteAttuale!
+          );
+          await _controller.salvaNuovoViaggio(
+            Trip(id: '', titolo: 'Weekend in Montagna', luogo: 'Trento', dataInizio: DateTime(2026, 07, 22), dataFine: DateTime(2026, 07, 31), budgetPrevisto: 400),
+            Sessione.idUtenteAttuale!
+          );
+          viaggiDb = await _controller.caricaViaggiUtente(Sessione.idUtenteAttuale!);
+        }
+
         if (!mounted) return;
 
         setState(() {
           _tuttiIViaggi.clear();
-          _tuttiIViaggi.addAll(viaggiDb);
+          _tuttiIViaggi.addAll(viaggiDb); 
+
           _viaggiFiltrati = List.from(_tuttiIViaggi);
+          _applicaFiltri(); 
         });
       } catch (e) {
         debugPrint("Errore caricamento DB: $e");
@@ -80,14 +100,12 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  // Funzione unica che unisce il filtro testuale e il filtro data
   void _applicaFiltri() {
     String query = _searchController.text.toLowerCase().trim();
     DateTime oggi = DateTime.now();
 
     setState(() {
       _viaggiFiltrati = _tuttiIViaggi.where((viaggio) {
-        // CORRETTO: Sostituito viaggio.data con viaggio.dataInizio
         String statoViaggio = viaggio.dataInizio.isAfter(oggi) ? 'da fare' : 'passato';
 
         // 1. Controllo Filtro Testuale
@@ -108,7 +126,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // Funzione per aprire il DatePicker nativo di Flutter
   Future<void> _selezionaData(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -141,7 +158,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Funzione per resettare il filtro della data
   void _rimuoviFiltroData() {
     setState(() {
       _selectedDate = null;
@@ -154,7 +170,7 @@ class _HomePageState extends State<HomePage> {
     DateTime oggi = DateTime.now();
 
     return Scaffold(
-      backgroundColor: const Color.fromRGBO(225, 170, 5, 1), // Giallo ocra
+      backgroundColor: Color.fromRGBO(255, 193, 7, 1), // Giallo ocra
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
@@ -184,7 +200,8 @@ class _HomePageState extends State<HomePage> {
                 decoration: InputDecoration(
                   fillColor: Colors.white,
                   filled: true,
-                  hintText: 'LUOGO, DATA, STATO',
+                  // MODIFICATO: Testo del placeholder aggiornato qui sotto
+                  hintText: 'TITOLO, DESTINAZIONE, DATA',
                   hintStyle: const TextStyle(color: Colors.black45, fontWeight: FontWeight.w500),
                   prefixIcon: const Icon(Icons.search, color: Colors.black),
                   suffixIcon: IconButton(
@@ -212,7 +229,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
 
-              // Indicatore filtro data attivo
               if (_selectedDate != null) ...[
                 const SizedBox(height: 5),
                 Text(
@@ -250,14 +266,25 @@ class _HomePageState extends State<HomePage> {
                           }
 
                           final viaggio = _viaggiFiltrati[index];
-                          bool isFuturo = viaggio.dataInizio.isAfter(oggi);
+                          DateTime soloDataOggi = DateTime(oggi.year, oggi.month, oggi.day);
+                          DateTime inizio = DateTime(viaggio.dataInizio.year, viaggio.dataInizio.month, viaggio.dataInizio.day);
+                          DateTime fine = DateTime(viaggio.dataFine.year, viaggio.dataFine.month, viaggio.dataFine.day);
+
+                          Color coloreStato;
+                          if (soloDataOggi.isBefore(inizio)) {
+                            coloreStato = Colors.green;
+                          } else if (soloDataOggi.isAfter(fine)) {
+                            coloreStato = Colors.red;
+                          } else {
+                            coloreStato = Colors.yellowAccent;
+                          }
 
                           return Container(
                             margin: const EdgeInsets.only(bottom: 15),
                             child: InkWell(
                               onTap: () {
                                 debugPrint("Cliccato sul viaggio: ${viaggio.titolo}");
-                                Navigator.pushNamed(context, AppRoutes.riepilogoViaggio, arguments: viaggio); //Appena modificat
+                                Navigator.pushNamed(context, AppRoutes.riepilogoViaggio, arguments: viaggio);
                               },
                               borderRadius: BorderRadius.circular(5),
                               child: Ink(
@@ -273,7 +300,7 @@ class _HomePageState extends State<HomePage> {
                                       width: 14,
                                       height: 14,
                                       decoration: BoxDecoration(
-                                        color: isFuturo ? Colors.green : Colors.red,
+                                        color: coloreStato,
                                         shape: BoxShape.circle,
                                         border: Border.all(color: Colors.black, width: 1),
                                       ),

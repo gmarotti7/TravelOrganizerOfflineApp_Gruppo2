@@ -41,7 +41,7 @@ class _NewCostState extends State<NewCost> {
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
               primary: Colors.black,
-              onPrimary: Colors.amber,
+              onPrimary: Color.fromRGBO(255, 193, 7, 1),
               onSurface: Colors.black,
             ),
             textButtonTheme: TextButtonThemeData(
@@ -142,9 +142,9 @@ class _NewCostState extends State<NewCost> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.amber,
+      backgroundColor: Color.fromRGBO(255, 193, 7, 1),
       appBar: AppBar(
-        backgroundColor: Colors.amber,
+        backgroundColor: Color.fromRGBO(255, 193, 7, 1),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black, size: 30),
@@ -210,6 +210,8 @@ class _NewCostState extends State<NewCost> {
               const SizedBox(height: 5),
               TextFormField(
                 controller: _dataController,
+                readOnly: true,
+                onTap: () => _selezionaData(context),
                 keyboardType: TextInputType.datetime,
                 validator: (valore) {
                   if (valore == null || valore.trim().isEmpty) {

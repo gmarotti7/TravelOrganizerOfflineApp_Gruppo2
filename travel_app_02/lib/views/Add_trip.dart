@@ -23,14 +23,12 @@ class _AddTripState extends State<AddTrip> {
   DateTime? _dataPartenza;
   DateTime? _dataRitorno;
 
-  // Packlist consigliata selezionata (al massimo una): null, 'MARE', 'MONTAGNA' o 'CITTÀ'
   String? _packlistSelezionata;
 
   final Map<String, bool> _oggettiMare = {'Crema solare': true, 'Ciabatte': true, 'Costume': true};
   final Map<String, bool> _oggettiMontagna = {'Scarponi': true, 'Giacca a vento': true, 'Borraccia': true};
   final Map<String, bool> _oggettiCitta = {'Mappa': true, 'Scarpe comode': true, 'Powerbank': true};
 
-  // Ritorna la mappa oggetti corrispondente al titolo passato
   Map<String, bool> _mappaPerTitolo(String titolo) {
     switch (titolo) {
       case 'MARE':
@@ -47,7 +45,7 @@ class _AddTripState extends State<AddTrip> {
   final List<Stay> _tappeAggiunte = [];
   final List<Map<String, dynamic>> _checklistPersonalizzate = [];
 
-  late String _valutaScelta = Sessione.valutaAttuale;
+  late final String _valutaScelta = Sessione.valutaAttuale;
 
   @override
   void dispose() {
@@ -59,8 +57,6 @@ class _AddTripState extends State<AddTrip> {
   }
 
   Future<void> _apriAggiungiTappa() async {
-    // Le tappe devono stare dentro le date del viaggio: se non sono ancora
-    // state scelte, chiediamo prima quelle.
     if (_dataPartenza == null || _dataRitorno == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -71,8 +67,6 @@ class _AddTripState extends State<AddTrip> {
       return;
     }
 
-    // Viaggio "temporaneo" (non ancora salvato) usato solo per passare a
-    // NewStay i limiti di data corretti.
     final viaggioTemporaneo = Trip(
       id: '',
       titolo: _titoloController.text,
@@ -107,7 +101,6 @@ class _AddTripState extends State<AddTrip> {
     }
   }
 
-  // Modifica una checklist personalizzata già aggiunta (prima della creazione del viaggio)
   Future<void> _modificaChecklist(int index) async {
     final result = await Navigator.push(
       context,
@@ -136,7 +129,7 @@ class _AddTripState extends State<AddTrip> {
           data: ThemeData.dark().copyWith(
             scaffoldBackgroundColor: const Color(0xFF121212),
             colorScheme: const ColorScheme.dark(
-              primary: Color.fromRGBO(225, 170, 5, 1),
+              primary: Color.fromRGBO(255, 193, 7, 1),
               onPrimary: Colors.black,
               surface: Color(0xFF1E1E1E),
               onSurface: Colors.white,
@@ -146,7 +139,7 @@ class _AddTripState extends State<AddTrip> {
               backgroundColor: Color(0xFF121212),
               headerBackgroundColor: Colors.black,
               headerHeadlineStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
-              headerHelpStyle: TextStyle(color: Color.fromRGBO(225, 170, 5, 1), fontWeight: FontWeight.bold),
+              headerHelpStyle: TextStyle(color: Color.fromRGBO(255, 193, 7, 1), fontWeight: FontWeight.bold),
             ),
           ),
           child: child!,
@@ -165,7 +158,7 @@ class _AddTripState extends State<AddTrip> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromRGBO(225, 170, 5, 1),
+      backgroundColor: Color.fromRGBO(255, 193, 7, 1),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -188,7 +181,11 @@ class _AddTripState extends State<AddTrip> {
               _buildTextField(controller: _titoloController, hintText: 'TITOLO'),
               const SizedBox(height: 15),
 
-              _buildTextField(controller: _destinazioneController, hintText: 'DESTINAZIONE'),
+              _buildTextField(
+                controller: _destinazioneController, 
+                hintText: 'DESTINAZIONE',
+                textCapitalization: TextCapitalization.words,
+              ),
               const SizedBox(height: 15),
 
               InkWell(
@@ -264,7 +261,6 @@ class _AddTripState extends State<AddTrip> {
                 onPressed: _apriAggiungiChecklist,
               ),
 
-              // Lista Checklist Personalizzate con pulsante modifica
               if (_checklistPersonalizzate.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 ..._checklistPersonalizzate.asMap().entries.map((entry) {
@@ -341,14 +337,63 @@ class _AddTripState extends State<AddTrip> {
 
               _buildButtonNero(
                 testo: 'CONFERMA',
-                onPressed: () {
+                onPressed: () async {
                   if (_titoloController.text.isNotEmpty &&
                       _destinazioneController.text.isNotEmpty &&
                       _dataPartenza != null &&
                       _dataRitorno != null) {
 
-                    // Se l'utente ha scelto una packlist consigliata, prepariamo gli
-                    // elementi da salvare (solo quelli lasciati spuntati nella lista).
+                    final String titoloNuovo = _titoloController.text.trim().toLowerCase();
+                    final int idUtente = Sessione.idUtenteAttuale ?? 1;
+
+                    try {
+                      // Recuperiamo tutti i viaggi salvati dell'utente attuale
+                      final viaggiEsistenti = await _viaggioController.caricaViaggiUtente(idUtente);
+                      
+                      // 1. CONTROLLO FILTRO TITOLI DUPLICATI
+                      final bool titoloGiaPresente = viaggiEsistenti.any(
+                        (v) => v.titolo.trim().toLowerCase() == titoloNuovo
+                      );
+
+                      if (titoloGiaPresente) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Esiste già un viaggio con questo titolo! Scegline un altro.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return; 
+                      }
+
+                      // 2. CONTROLLO FILTRO SOVRAPPOSIZIONE DATE (Coincidenti o comprese)
+                      // Normalizziamo le nuove date scelte (senza ore/minuti)
+                      final DateTime pNuova = DateTime(_dataPartenza!.year, _dataPartenza!.month, _dataPartenza!.day);
+                      final DateTime rNuova = DateTime(_dataRitorno!.year, _dataRitorno!.month, _dataRitorno!.day);
+
+                      final bool dateSovrapposte = viaggiEsistenti.any((v) {
+                        final DateTime pEsistente = DateTime(v.dataInizio.year, v.dataInizio.month, v.dataInizio.day);
+                        final DateTime rEsistente = DateTime(v.dataFine.year, v.dataFine.month, v.dataFine.day);
+
+                        // Formula matematica di sovrapposizione: inizioA <= fineB E fineA >= inizioB
+                        return !pNuova.isAfter(rEsistente) && !rNuova.isBefore(pEsistente);
+                      });
+
+                      if (dateSovrapposte) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Attenzione! Le date si sovrappongono con un altro viaggio già pianificato.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return; // Blocca il salvataggio
+                      }
+
+                    } catch (e) {
+                      debugPrint("Errore controlli DB: $e");
+                    }
+
                     String? packlistTitolo;
                     List<Map<String, dynamic>>? packlistElementi;
                     if (_packlistSelezionata != null) {
@@ -359,8 +404,6 @@ class _AddTripState extends State<AddTrip> {
                           .toList();
                     }
 
-                    // Il database supporta al massimo una checklist per viaggio:
-                    // usiamo la prima creata, se presente.
                     String? checklistTitolo;
                     List<Map<String, dynamic>>? checklistElementi;
                     if (_checklistPersonalizzate.isNotEmpty) {
@@ -388,6 +431,8 @@ class _AddTripState extends State<AddTrip> {
                       if (checklistTitolo != null) 'checklist': checklistTitolo,
                       if (checklistElementi != null) 'checklistItems': checklistElementi,
                     };
+
+                    if (!context.mounted) return;
                     Navigator.pop(context, risultato);
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -406,9 +451,14 @@ class _AddTripState extends State<AddTrip> {
     );
   }
 
-  Widget _buildTextField({required TextEditingController controller, required String hintText}) {
+  Widget _buildTextField({
+    required TextEditingController controller, 
+    required String hintText,
+    TextCapitalization textCapitalization = TextCapitalization.none,
+  }) {
     return TextField(
       controller: controller,
+      textCapitalization: textCapitalization,
       style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
       decoration: InputDecoration(
         fillColor: Colors.white,

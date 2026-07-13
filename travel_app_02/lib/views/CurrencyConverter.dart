@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'BottomBar.dart';
 import 'package:travel_app_02/sessione.dart';
+import 'package:travel_app_02/route.dart';
 
 class CurrencyConverter extends StatefulWidget {
   const CurrencyConverter({Key? key}) : super(key: key);
@@ -88,16 +89,25 @@ class _CurrencyConverterState extends State<CurrencyConverter> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.amber, // Sfondo giallo full-screen
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          // Forza il ritorno alla Home col tasto fisico del telefono
+          Navigator.pushReplacementNamed(context, AppRoutes.home);
+        }
+      },
+
+    child: Scaffold(
+      backgroundColor: Color.fromRGBO(255, 193, 7, 1), // Sfondo giallo full-screen
 
       // --- BARRA SUPERIORE ---
       appBar: AppBar(
-        backgroundColor: Colors.amber,
+        backgroundColor: Color.fromRGBO(255, 193, 7, 1),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black, size: 30),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.home),
         ),
         centerTitle: true,
         title: const Text(
@@ -180,6 +190,7 @@ class _CurrencyConverterState extends State<CurrencyConverter> {
 
       // --- BARRA DI NAVIGAZIONE INFERIORE ---
       bottomNavigationBar: const CustomBottomNavBar(),
+    ),
     );
   }
 

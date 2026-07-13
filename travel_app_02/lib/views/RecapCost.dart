@@ -133,9 +133,9 @@ class _RecapCostState extends State<RecapCost> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.amber,
+        backgroundColor: Color.fromRGBO(255, 193, 7, 1),
         appBar: AppBar(
-          backgroundColor: Colors.amber,
+          backgroundColor: Color.fromRGBO(255, 193, 7, 1),
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.black, size: 30),

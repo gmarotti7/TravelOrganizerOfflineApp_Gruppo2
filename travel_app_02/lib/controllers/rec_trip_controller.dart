@@ -19,11 +19,11 @@ class RecTripController extends ChangeNotifier {
     final fine = DateTime(trip.dataFine.year, trip.dataFine.month, trip.dataFine.day);
 
     if (oggi.isBefore(inizio)) {
-      return Colors.red;
-    } else if (oggi.isAfter(fine)) {
       return Colors.green;
+    } else if (oggi.isAfter(fine)) {
+      return Colors.red;
     } else {
-      return Colors.amber;
+      return Colors.yellowAccent;
     }
   }
 
