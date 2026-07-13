@@ -179,9 +179,9 @@ class _RecapTripState extends State<RecapTrip> {
     final trip = widget.controller.trip;
 
     return Scaffold(
-      backgroundColor: gialloSfondo,
+      backgroundColor: Color.fromRGBO(255, 193, 7, 1),
       appBar: AppBar(
-        backgroundColor: gialloSfondo,
+        backgroundColor: Color.fromRGBO(255, 193, 7, 1),
         elevation: 0,
         leading: const BackButton(color: Colors.black),
         title: Text(

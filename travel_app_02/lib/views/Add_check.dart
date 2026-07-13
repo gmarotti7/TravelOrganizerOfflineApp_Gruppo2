@@ -134,7 +134,7 @@ class _AddCheckState extends State<AddCheck> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.amber, 
+      backgroundColor: Color.fromRGBO(255, 193, 7, 1),
       body: SafeArea(
         child: Stack(
           children: [
@@ -310,7 +310,7 @@ class _AddCheckState extends State<AddCheck> {
                                   ),
                                   value: item['isChecked'],
                                   activeColor: Colors.black,
-                                  checkColor: Colors.amber,
+                                  checkColor: Color.fromRGBO(255, 193, 7, 1),
                                   controlAffinity: ListTileControlAffinity.leading,
                                   onChanged: (bool? valoreNuovo) {
                                     setState(() {

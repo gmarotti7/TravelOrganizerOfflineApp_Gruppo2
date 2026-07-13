@@ -97,7 +97,7 @@ class _ProfilePageState extends State<ProfilePage> {
         child: Wrap(
           children: [
             ListTile(
-              leading: const Icon(Icons.photo_library, color: Colors.amber),
+              leading: const Icon(Icons.photo_library, color: Color.fromRGBO(255, 193, 7, 1),),
               title: const Text('Scegli dalla Galleria', style: TextStyle(color: Colors.white)),
               onTap: () {
                 Navigator.of(context).pop();
@@ -105,7 +105,7 @@ class _ProfilePageState extends State<ProfilePage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.amber),
+              leading: const Icon(Icons.camera_alt, color: Color.fromRGBO(255, 193, 7, 1),),
               title: const Text('Scatta una Foto', style: TextStyle(color: Colors.white)),
               onTap: () {
                 Navigator.of(context).pop();
@@ -159,11 +159,11 @@ class _ProfilePageState extends State<ProfilePage> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.amber,
+        backgroundColor: Color.fromRGBO(255, 193, 7, 1),
 
         // --- BARRA SUPERIORE ---
         appBar: AppBar(
-          backgroundColor: Colors.amber,
+          backgroundColor: Color.fromRGBO(255, 193, 7, 1),
           elevation: 0,
           centerTitle: true,
           automaticallyImplyLeading: false,

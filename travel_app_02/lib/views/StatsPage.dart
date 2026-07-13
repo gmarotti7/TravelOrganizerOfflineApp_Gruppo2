@@ -57,11 +57,11 @@ class _StatsPageState extends State<StatsPage> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.amber, // Sfondo giallo full-screen
+        backgroundColor: Color.fromRGBO(255, 193, 7, 1), // Sfondo giallo full-screen
 
         // --- BARRA SUPERIORE ---
         appBar: AppBar(
-          backgroundColor: Colors.amber,
+          backgroundColor: Color.fromRGBO(255, 193, 7, 1),
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.black, size: 30),
