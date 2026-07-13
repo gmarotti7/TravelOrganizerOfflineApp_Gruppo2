@@ -282,9 +282,10 @@ class _HomePageState extends State<HomePage> {
                           return Container(
                             margin: const EdgeInsets.only(bottom: 15),
                             child: InkWell(
-                              onTap: () {
+                              onTap: () async {
                                 debugPrint("Cliccato sul viaggio: ${viaggio.titolo}");
-                                Navigator.pushNamed(context, AppRoutes.riepilogoViaggio, arguments: viaggio);
+                                await Navigator.pushNamed(context, AppRoutes.riepilogoViaggio, arguments: viaggio);
+                                _caricaDatiDalDatabase();
                               },
                               borderRadius: BorderRadius.circular(5),
                               child: Ink(

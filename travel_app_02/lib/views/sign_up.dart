@@ -138,11 +138,20 @@ class _SignUp extends State<SignUp> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color.fromRGBO(225, 193, 7, 1), // Giallo ocra
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
+          onPressed: () {
+            // Chiudi la tastiera prima del pop
+            FocusScope.of(context).unfocus();
+            Navigator.pop(context);
+          },
+        ),
+      ),
       body: SafeArea(
-        child: Stack(
-          children: [
-            // Contenuto centrale del modulo (SPOSTATO PER PRIMO)
-            Center(
+        child: Center(
               child: SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 24.0),
@@ -313,11 +322,11 @@ class _SignUp extends State<SignUp> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('Errore: Compila tutti i campi!'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return; 
-    }
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return; 
+                            }
 
     if (_validaCampi()) {
       
@@ -413,20 +422,6 @@ class _SignUp extends State<SignUp> {
                 ),
               ),
             ),
-
-            // Freccia in alto a sinistra (SPOSTATA PER ULTIMA, COSÌ STA SOPRA)
-            Positioned(
-              top: 10,
-              left: 10,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

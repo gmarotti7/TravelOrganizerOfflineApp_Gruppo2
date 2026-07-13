@@ -88,25 +88,20 @@ class _LoginState extends State<Login> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color.fromRGBO(255, 193, 7, 1), // Giallo ocra
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
+          onPressed: () {
+            // Chiudi la tastiera per sicurezza prima di cambiare rotta
+            FocusScope.of(context).unfocus();
+            Navigator.pushNamedAndRemoveUntil(context, AppRoutes.start, (route) => false);
+          },
+        ),
+      ),
       body: SafeArea(
-        child: Stack(
-          children: [
-            // Freccia in alto a sinistra per tornare indietro alla pagina start
-            Positioned(
-              top: 10,
-              left: 10,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
-                onPressed: () {
-  // Forza il Navigator ad andare alla rotta definita come start
-  // e rimuovi tutto ciò che c'è dietro (false)
-  Navigator.pushNamedAndRemoveUntil(context, AppRoutes.start, (route) => false);
-},
-              ),
-            ),
-            
-            // Contenuto centrale della pagina
-            Center(
+        child: Center(
               child: SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 24.0),
@@ -196,8 +191,6 @@ class _LoginState extends State<Login> {
                 ),
               ),
             ),
-          ],
-        ),
       ),
     );
   }

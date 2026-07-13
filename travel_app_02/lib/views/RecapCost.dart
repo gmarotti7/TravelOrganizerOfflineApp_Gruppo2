@@ -15,14 +15,25 @@ class RecapCost extends StatefulWidget {
 class _RecapCostState extends State<RecapCost> {
   final CostController _costController = CostController();
   Expense? _spesa;
+  String? _nomeViaggio;
   bool _inizializzato = false;
-  bool _modificato = false; // true se qualcosa è stato modificato/eliminato: serve a dire al chiamante di ricaricare
+  bool _modificato = false;
+
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_inizializzato) {
-      _spesa = ModalRoute.of(context)!.settings.arguments as Expense;
+      final args = ModalRoute.of(context)!.settings.arguments;
+      
+      // Controlliamo se stiamo ricevendo la Mappa (nuovo metodo) o solo la Spesa
+      if (args is Map<String, dynamic>) {
+        _spesa = args['spesa'] as Expense;
+        _nomeViaggio = args['nomeViaggio'] as String;
+      } else if (args is Expense) {
+        _spesa = args;
+      }
+      
       _inizializzato = true;
     }
   }
@@ -175,7 +186,7 @@ class _RecapCostState extends State<RecapCost> {
                 _buildRecapItem('DATA', spesaPassata.data ?? 'Non specificata'),
                 _buildRecapItem('METODO DI PAGAMENTO', spesaPassata.metodoPagamento ?? 'Non specificato'),
                 _buildRecapItem('CATEGORIA', spesaPassata.categoria ?? 'Non Specificato'),
-                _buildRecapItem('VIAGGIO ASSOCIATO', spesaPassata.viaggioAssociato ?? 'Non specificato'),
+                _buildRecapItem('VIAGGIO ASSOCIATO', _nomeViaggio ?? spesaPassata.viaggioAssociato ?? 'Non specificato'),
                 _buildRecapItem('ATTIVITÀ ASSOCIATA', spesaPassata.attivitaAssociata ?? 'Non specificata'),
                 const SizedBox(height: 10),
                 const Text(

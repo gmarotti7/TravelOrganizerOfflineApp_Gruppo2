@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:travel_app_02/models/trip.dart';
 import 'package:travel_app_02/controllers/trip_controller.dart';
 import 'BottomBar.dart';
+import 'package:travel_app_02/sessione.dart';
 
 class EditTripField extends StatefulWidget {
   const EditTripField({Key? key}) : super(key: key);
@@ -154,7 +155,33 @@ class _EditTripFieldState extends State<EditTripField> {
                   } else if (isNumero) {
                     nuovoValore = double.tryParse(_testoController.text.replaceAll(',', '.')) ?? trip.budgetPrevisto;
                   } else {
-                    nuovoValore = _testoController.text;
+                    nuovoValore = _testoController.text.trim();
+                  }
+
+                  if (campo == 'titolo') {
+                    final int idUtente = Sessione.idUtenteAttuale ?? 1;
+                    try {
+                      final viaggiEsistenti = await _tripController.caricaViaggiUtente(idUtente);
+                      final String titoloNuovoLower = nuovoValore.toString().toLowerCase();
+
+                      final bool titoloGiaPresente = viaggiEsistenti.any((v) =>
+                          v.titolo.trim().toLowerCase() == titoloNuovoLower &&
+                          v.id != trip.id);
+
+                      if (titoloGiaPresente) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Esiste già un viaggio con questo titolo! Scegline un altro.'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                        return;
+                      }
+                    } catch (e) {
+                      debugPrint("Errore controllo duplicati: $e");
+                    }
                   }
 
                   final valoreDaSalvare = isData ? (nuovoValore as DateTime).toIso8601String() : nuovoValore;

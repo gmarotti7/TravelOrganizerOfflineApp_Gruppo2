@@ -531,7 +531,10 @@ class _RecapTripState extends State<RecapTrip> {
                           final aggiorna = await Navigator.pushNamed(
                             context,
                             AppRoutes.recapCost,
-                            arguments: spesa,
+                            arguments: {
+                              'spesa':spesa,
+                              'nomeViaggio': trip.titolo,
+                            }
                           );
                           if (aggiorna == true) {
                             _caricaSpese();
