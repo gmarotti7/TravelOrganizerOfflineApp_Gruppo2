@@ -148,6 +148,72 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  // Popup di conferma prima del logout
+  void _confermaLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('CONFERMA LOGOUT'),
+        content: const Text('Sei sicuro di voler effettuare il logout?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              Sessione.idUtenteAttuale = null;
+              Navigator.pushNamedAndRemoveUntil(context, AppRoutes.start, (route) => false);
+            },
+            child: const Text('SÌ'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('NO'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Popup di conferma prima dell'eliminazione definitiva dell'account
+  void _confermaEliminaAccount(BuildContext context, int idUtente) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('CONFERMA ELIMINAZIONE ACCOUNT'),
+        content: const Text(
+          'Sei sicuro di voler eliminare il tuo account? '
+          'Tutti i viaggi, le spese, le tappe, le checklist e le packlist '
+          'associate verranno eliminati definitivamente e non potranno essere recuperati.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              bool eliminato = await _profileController.eliminaAccount(idUtente);
+
+              if (eliminato && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Account eliminato con successo.', style: TextStyle(fontWeight: FontWeight.bold)),
+                    backgroundColor: Colors.black,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+
+                Sessione.idUtenteAttuale = null;
+                Navigator.pushNamedAndRemoveUntil(context, AppRoutes.start, (route) => false);
+              }
+            },
+            child: const Text('SÌ'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('NO'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -263,10 +329,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   _buildMenuButton(
                     testo: 'LOGOUT',
                     icona: Icons.power_settings_new,
-                    onPressed: () {
-                      Sessione.idUtenteAttuale = null;
-                      Navigator.pushNamedAndRemoveUntil(context, AppRoutes.start, (route) => false);
-                    },
+                    onPressed: () => _confermaLogout(context),
                   ),
 
                   const SizedBox(height: 25),
@@ -276,22 +339,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     testo: 'ELIMINA ACCOUNT',
                     icona: Icons.delete_forever,
                     coloreSfondo: Colors.red,
-                    onPressed: () async {
-                      bool eliminato = await _profileController.eliminaAccount(idUtente);
-
-                      if (eliminato && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Account eliminato con successo.', style: TextStyle(fontWeight: FontWeight.bold)),
-                            backgroundColor: Colors.black,
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-
-                        Sessione.idUtenteAttuale = null;
-                        Navigator.pushNamedAndRemoveUntil(context, AppRoutes.start, (route) => false);
-                      }
-                    },
+                    onPressed: () => _confermaEliminaAccount(context, idUtente),
                   ),
                 ],
               ),
