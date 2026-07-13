@@ -16,11 +16,99 @@ class _EditStayFieldState extends State<EditStayField> {
   bool _inizializzato = false;
 
   final StayController _stayController = StayController();
+  DateTime? _dataInizioViaggio;
+  DateTime? _dataFineViaggio;
 
   @override
   void dispose() {
     _testoController.dispose();
     super.dispose();
+  }
+
+  Future<void> _selezionaData(BuildContext context) async {
+    DateTime primoGiornoValido = _dataInizioViaggio ?? DateTime(2000);
+    DateTime ultimoGiornoValido = _dataFineViaggio ?? DateTime(2100);
+    
+    DateTime dataIniziale = DateTime.now();
+    
+    if (_testoController.text.isNotEmpty) {
+      try {
+        final parti = _testoController.text.split('/');
+        if (parti.length == 3) {
+          dataIniziale = DateTime(int.parse(parti[2]), int.parse(parti[1]), int.parse(parti[0]));
+        }
+      } catch (_) {}
+    }
+
+    if (dataIniziale.isBefore(primoGiornoValido) || dataIniziale.isAfter(ultimoGiornoValido)) {
+      dataIniziale = primoGiornoValido;
+    }
+
+    final DateTime? dataSelezionata = await showDatePicker(
+      context: context,
+      initialDate: dataIniziale,
+      firstDate: primoGiornoValido,
+      lastDate: ultimoGiornoValido,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Colors.black, 
+              onPrimary: Color.fromRGBO(255, 193, 7, 1), 
+              onSurface: Colors.black, 
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (dataSelezionata != null) {
+      String giorno = dataSelezionata.day.toString().padLeft(2, '0');
+      String mese = dataSelezionata.month.toString().padLeft(2, '0');
+      String anno = dataSelezionata.year.toString();
+      setState(() {
+        _testoController.text = "$giorno/$mese/$anno";
+      });
+    }
+  }
+
+  Future<void> _selezionaOra(BuildContext context) async {
+    TimeOfDay oraIniziale = TimeOfDay.now();
+    
+    if (_testoController.text.isNotEmpty) {
+      try {
+        final parti = _testoController.text.split(':');
+        if (parti.length == 2) {
+          oraIniziale = TimeOfDay(hour: int.parse(parti[0]), minute: int.parse(parti[1]));
+        }
+      } catch (_) {}
+    }
+
+    final TimeOfDay? oraSelezionata = await showTimePicker(
+      context: context,
+      initialTime: oraIniziale,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Colors.black,
+              onPrimary: Colors.amber,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (oraSelezionata != null) {
+      String ore = oraSelezionata.hour.toString().padLeft(2, '0');
+      String minuti = oraSelezionata.minute.toString().padLeft(2, '0');
+      setState(() {
+        _testoController.text = "$ore:$minuti";
+      });
+    }
   }
 
   @override
@@ -31,6 +119,9 @@ class _EditStayFieldState extends State<EditStayField> {
     final String label = args['label'];
 
     if (!_inizializzato) {
+      _dataInizioViaggio = args['dataInizioViaggio'];
+      _dataFineViaggio = args['dataFineViaggio'];
+
       switch (campo) {
         case 'titolo':
           _testoController.text = tappa.titolo;
@@ -53,11 +144,15 @@ class _EditStayFieldState extends State<EditStayField> {
 
     final bool isNumero = campo == 'costoPrevisto';
     final bool isDescrizione = campo == 'descrizione';
+    final bool isData = campo == 'data';
+    final bool isOra = campo == 'ora';
+    
+    final bool isSolaLettura = isData || isOra;
 
     return Scaffold(
-      backgroundColor: Color.fromRGBO(255, 193, 7, 1),
+      backgroundColor: const Color.fromRGBO(255, 193, 7, 1),
       appBar: AppBar(
-        backgroundColor: Color.fromRGBO(255, 193, 7, 1),
+        backgroundColor: const Color.fromRGBO(255, 193, 7, 1),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black, size: 30),
@@ -85,13 +180,27 @@ class _EditStayFieldState extends State<EditStayField> {
               maxLines: isDescrizione ? 4 : 1,
               keyboardType: isNumero ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
               inputFormatters: isNumero ? [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))] : null,
-              decoration: const InputDecoration(
+              
+              readOnly: isSolaLettura,
+              onTap: () {
+                if (isData) _selezionaData(context);
+                if (isOra) _selezionaOra(context);
+              },
+              
+              decoration: InputDecoration(
                 filled: true,
                 fillColor: Colors.white,
-                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                enabledBorder: OutlineInputBorder(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+              
+                suffixIcon: isData 
+                    ? const Icon(Icons.calendar_month, color: Colors.black) 
+                    : isOra 
+                        ? const Icon(Icons.access_time, color: Colors.black) 
+                        : null,
+                        
+                enabledBorder: const OutlineInputBorder(
                     borderSide: BorderSide(color: Colors.black, width: 2), borderRadius: BorderRadius.zero),
-                focusedBorder: OutlineInputBorder(
+                focusedBorder: const OutlineInputBorder(
                     borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
               ),
             ),
@@ -107,7 +216,7 @@ class _EditStayFieldState extends State<EditStayField> {
                   try {
                     await _stayController.aggiornaCampoTappa(tappa.id, campo, valoreDaSalvare);
                     if (context.mounted) {
-                      Navigator.pop(context, true);
+                      Navigator.pop(context, {'campo': campo, 'valore': valoreDaSalvare});
                     }
                   } catch (e) {
                     if (context.mounted) {

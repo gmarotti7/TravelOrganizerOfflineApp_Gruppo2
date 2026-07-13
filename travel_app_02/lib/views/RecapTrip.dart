@@ -289,9 +289,13 @@ class _RecapTripState extends State<RecapTrip> {
                           final aggiorna = await Navigator.pushNamed(
                             context,
                             AppRoutes.recapStay,
-                            arguments: tappa,
+                            arguments: {
+                              'tappa': tappa,
+                              'dataInizioViaggio': trip.dataInizio,
+                              'dataFineViaggio': trip.dataFine,
+                            },
                           );
-                          if (aggiorna == true) {
+                          if (aggiorna == true || aggiorna == 'eliminata') {
                             _caricaTappe();
                           }
                         },

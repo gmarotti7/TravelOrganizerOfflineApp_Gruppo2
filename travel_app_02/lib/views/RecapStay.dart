@@ -5,8 +5,37 @@ import 'EditStayField.dart';
 import 'BottomBar.dart';
 import 'package:travel_app_02/sessione.dart';
 
-class RecapStay extends StatelessWidget {
+class RecapStay extends StatefulWidget {
   const RecapStay({Key? key}) : super(key: key);
+
+  @override
+  State<RecapStay> createState() => _RecapStayState();
+}
+
+class _RecapStayState extends State<RecapStay> {
+  Stay? _tappa;
+  bool _inizializzato = false;
+  bool _modificato = false;
+  DateTime? _dataInizioViaggio;
+  DateTime? _dataFineViaggio;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_inizializzato) {
+      final args = ModalRoute.of(context)!.settings.arguments;
+      
+      if (args is Map) {
+        _tappa = args['tappa'] as Stay;
+        _dataInizioViaggio = args['dataInizioViaggio'] as DateTime?;
+        _dataFineViaggio = args['dataFineViaggio'] as DateTime?;
+      } else if (args is Stay) {
+        _tappa = args;
+      }
+      
+      _inizializzato = true;
+    }
+  }
 
   Widget _buildRecapItem(String label, String placeholderValue) {
     return Padding(
@@ -29,21 +58,21 @@ class RecapStay extends StatelessWidget {
     );
   }
 
-  void _mostraConfermaEliminazione(BuildContext context, Stay tappa) {
+  void _mostraConfermaEliminazione(Stay tappaAttuale) {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('CONFERMA ELIMINAZIONE TAPPA'),
-        content: Text('Sei sicuro di voler eliminare l\'attività "${tappa.titolo}"?'),
+        content: Text('Sei sicuro di voler eliminare l\'attività "${tappaAttuale.titolo}"?'),
         actions: [
           TextButton(
             onPressed: () async {
-              await StayController().eliminaTappa(tappa.id);
+              await StayController().eliminaTappa(tappaAttuale.id);
               if (dialogContext.mounted) {
-                Navigator.pop(dialogContext); // chiude il dialog
+                Navigator.pop(dialogContext);
               }
               if (context.mounted) {
-                Navigator.pop(context, 'eliminata'); // torna al Riepilogo Viaggio
+                Navigator.pop(context, 'eliminata');
               }
             },
             child: const Text('SÌ'),
@@ -57,121 +86,135 @@ class RecapStay extends StatelessWidget {
     );
   }
 
-  void _mostraMenuModificaTappa(BuildContext context, Stay tappa) {
+  void _mostraMenuModificaTappa(Stay tappaAttuale) {
     showModalBottomSheet(
       context: context,
-      builder: (context) => SafeArea(
+      builder: (bottomSheetContext) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              title: const Text('Titolo'),
-              onTap: () => _apriModificaCampo(context, tappa, 'titolo', 'Titolo'),
-            ),
-            ListTile(
-              title: const Text('Data'),
-              onTap: () => _apriModificaCampo(context, tappa, 'data', 'Data'),
-            ),
-            ListTile(
-              title: const Text('Ora'),
-              onTap: () => _apriModificaCampo(context, tappa, 'ora', 'Ora'),
-            ),
-            ListTile(
-              title: const Text('Descrizione'),
-              onTap: () => _apriModificaCampo(context, tappa, 'descrizione', 'Descrizione'),
-            ),
-            ListTile(
-              title: const Text('Costo Previsto'),
-              onTap: () => _apriModificaCampo(context, tappa, 'costoPrevisto', 'Costo Previsto'),
-            ),
+            ListTile(title: const Text('Titolo'), onTap: () { Navigator.pop(bottomSheetContext); _apriModificaCampo(tappaAttuale, 'titolo', 'Titolo'); }),
+            ListTile(title: const Text('Data'), onTap: () { Navigator.pop(bottomSheetContext); _apriModificaCampo(tappaAttuale, 'data', 'Data'); }),
+            ListTile(title: const Text('Ora'), onTap: () { Navigator.pop(bottomSheetContext); _apriModificaCampo(tappaAttuale, 'ora', 'Ora'); }),
+            ListTile(title: const Text('Descrizione'), onTap: () { Navigator.pop(bottomSheetContext); _apriModificaCampo(tappaAttuale, 'descrizione', 'Descrizione'); }),
+            ListTile(title: const Text('Costo Previsto'), onTap: () { Navigator.pop(bottomSheetContext); _apriModificaCampo(tappaAttuale, 'costoPrevisto', 'Costo Previsto'); }),
           ],
         ),
       ),
     );
   }
 
-  Future<void> _apriModificaCampo(BuildContext context, Stay tappa, String campo, String label) async {
-    Navigator.pop(context); // chiude il menu a tendina
-
+  Future<void> _apriModificaCampo(Stay tappaAttuale, String campo, String label) async {
     final salvato = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => const EditStayField(),
-        settings: RouteSettings(arguments: {'tappa': tappa, 'campo': campo, 'label': label}),
+        settings: RouteSettings(arguments: {'tappa': tappaAttuale, 'campo': campo, 'label': label,'dataInizioViaggio': _dataInizioViaggio, 'dataFineViaggio': _dataFineViaggio,}),
       ),
     );
 
-    // Come per l'eliminazione: torniamo al Riepilogo Viaggio, che ricarica
-    // le tappe fresche dal DB (i campi di Stay sono immutabili "final",
-    // quindi non possiamo aggiornarli qui in memoria).
-    if (salvato == true && context.mounted) {
-      Navigator.pop(context, true);
+    if (salvato != null && salvato is Map) {
+      setState(() {
+        _modificato = true;
+
+        String nTitolo = _tappa!.titolo;
+        String nData = _tappa!.data;
+        String nOra = _tappa!.ora;
+        String? nDescrizione = _tappa!.descrizione;
+        double nCosto = _tappa!.costoPrevisto;
+
+        switch (salvato['campo']) {
+          case 'titolo': nTitolo = salvato['valore']; break;
+          case 'data': nData = salvato['valore']; break;
+          case 'ora': nOra = salvato['valore']; break;
+          case 'descrizione': nDescrizione = salvato['valore']; break;
+          case 'costoPrevisto': nCosto = salvato['valore']; break;
+        }
+
+
+        _tappa = Stay(
+          id: _tappa!.id,
+          titolo: nTitolo,
+          data: nData,
+          ora: nOra,
+          descrizione: nDescrizione,
+          costoPrevisto: nCosto,
+        );
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final tappaPassata = ModalRoute.of(context)!.settings.arguments as Stay;
+    final tappaAttuale = _tappa!;
 
-    return Scaffold(
-      backgroundColor:  Color.fromRGBO(255, 193, 7, 1),
-      appBar: AppBar(
-        backgroundColor: Color.fromRGBO(255, 193, 7, 1),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black, size: 30),
-          onPressed: () => Navigator.pop(context),
-        ),
-        centerTitle: true,
-        title: const Text(
-          'RIEPILOGO TAPPA',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 24),
-        ),
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.menu, color: Colors.black, size: 30),
-            onSelected: (valore) {
-              if (valore == 'elimina') {
-                _mostraConfermaEliminazione(context, tappaPassata);
-              } else if (valore == 'modifica') {
-                _mostraMenuModificaTappa(context, tappaPassata);
-              }
-            },
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: 'modifica', child: Text('MODIFICA TAPPA')),
-              PopupMenuItem(value: 'elimina', child: Text('ELIMINA TAPPA')),
-            ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          Navigator.pop(context, _modificato);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color.fromRGBO(255, 193, 7, 1),
+        appBar: AppBar(
+          backgroundColor: const Color.fromRGBO(255, 193, 7, 1),
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black, size: 30),
+            onPressed: () => Navigator.pop(context, _modificato),
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildRecapItem('DATA', tappaPassata.data.isEmpty ? 'Non specificata' : tappaPassata.data),
-              _buildRecapItem('ORA', tappaPassata.ora.isEmpty ? 'Non specificata' : tappaPassata.ora),
-              _buildRecapItem('TITOLO', tappaPassata.titolo),
-              _buildRecapItem('COSTO PREVISTO', '${tappaPassata.costoPrevisto.toStringAsFixed(2)} ${Sessione.valutaAttuale}'),
-              const SizedBox(height: 10),
-              const Text(
-                'DESCRIZIONE:',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                (tappaPassata.descrizione == null || tappaPassata.descrizione!.isEmpty)
-                    ? 'Nessuna descrizione'
-                    : tappaPassata.descrizione!,
-                style: const TextStyle(fontSize: 18, color: Colors.black87),
-              ),
-              const SizedBox(height: 40),
-            ],
+          centerTitle: true,
+          title: const Text(
+            'RIEPILOGO TAPPA',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 24),
+          ),
+          actions: [
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.menu, color: Colors.black, size: 30),
+              onSelected: (valore) {
+                if (valore == 'elimina') {
+                  _mostraConfermaEliminazione(tappaAttuale);
+                } else if (valore == 'modifica') {
+                  _mostraMenuModificaTappa(tappaAttuale);
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(value: 'modifica', child: Text('MODIFICA TAPPA')),
+                PopupMenuItem(value: 'elimina', child: Text('ELIMINA TAPPA')),
+              ],
+            ),
+          ],
+        ),
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildRecapItem('DATA', tappaAttuale.data.isEmpty ? 'Non specificata' : tappaAttuale.data),
+                _buildRecapItem('ORA', tappaAttuale.ora.isEmpty ? 'Non specificata' : tappaAttuale.ora),
+                _buildRecapItem('TITOLO', tappaAttuale.titolo),
+                _buildRecapItem('COSTO PREVISTO', '${tappaAttuale.costoPrevisto.toStringAsFixed(2)} ${Sessione.valutaAttuale}'),
+                const SizedBox(height: 10),
+                const Text(
+                  'DESCRIZIONE:',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  (tappaAttuale.descrizione == null || tappaAttuale.descrizione!.isEmpty)
+                      ? 'Nessuna descrizione'
+                      : tappaAttuale.descrizione!,
+                  style: const TextStyle(fontSize: 18, color: Colors.black87),
+                ),
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
         ),
+        bottomNavigationBar: const CustomBottomNavBar(),
       ),
-      bottomNavigationBar: const CustomBottomNavBar(),
     );
   }
 }
