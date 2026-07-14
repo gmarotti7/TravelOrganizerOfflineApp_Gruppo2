@@ -139,6 +139,20 @@ class _EditProfileFieldState extends State<EditProfileField> {
                     return;
                   }
 
+                  if (campo == 'email') {
+                    if (!testo.contains('@') || testo.indexOf('@') == 0) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('L\'email deve contenere una @ e non può essere il primo carattere!'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                      return;
+                    }
+                  }
+
                   dynamic nuovoValore;
                   if (isNumero) {
                     nuovoValore = int.tryParse(testo);
@@ -163,8 +177,19 @@ class _EditProfileFieldState extends State<EditProfileField> {
                     }
                   } catch (e) {
                     if (context.mounted) {
+                      String errorMessage = e.toString();
+                      
+                      if (errorMessage.toLowerCase().contains('unique')) {
+                        errorMessage = 'Questo $label è già in uso! Scegline un altro.';
+                      } else {
+                        errorMessage = 'Errore durante il salvataggio: $e';
+                      }
+
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Errore durante il salvataggio: $e')),
+                        SnackBar(
+                          content: Text(errorMessage, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          backgroundColor: Colors.red,
+                        ),
                       );
                     }
                   }

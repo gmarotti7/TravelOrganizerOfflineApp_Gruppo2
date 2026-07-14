@@ -11,11 +11,18 @@ class RecapChecklist extends StatefulWidget {
 
 class _RecapChecklistState extends State<RecapChecklist> {
   final ChecklistController _controller = ChecklistController();
+  final TextEditingController _nuovoElementoController = TextEditingController();
   List<Map<String, dynamic>> _elementi = [];
   bool _caricamento = true;
   late int _idChecklist;
   late String _titolo;
 
+  @override
+  void dispose() {
+    _nuovoElementoController.dispose();
+    super.dispose();
+  }
+  
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -34,6 +41,34 @@ class _RecapChecklistState extends State<RecapChecklist> {
       _elementi = elementi.map((e) => Map<String, dynamic>.from(e)).toList();
       _caricamento = false;
     });
+  }
+
+  Future<void> _aggiungiNuovoElemento() async {
+    final nome = _nuovoElementoController.text.trim();
+    if (nome.isEmpty) return;
+
+    try {
+      final nuovoId = await _controller.aggiungiElemento(_idChecklist, nome);
+
+      setState(() {
+        _elementi.add({
+          'id': nuovoId,
+          'nomeItem': nome,
+          'isCompletato': 0,
+        });
+      });
+
+      _nuovoElementoController.clear();
+      
+      FocusScope.of(context).unfocus();
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Errore aggiungendo l\'elemento: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   void _mostraRinominaChecklist() {
@@ -264,6 +299,41 @@ class _RecapChecklistState extends State<RecapChecklist> {
                               );
                             },
                           ),
+                  ),
+
+                  const SizedBox(height: 15),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _nuovoElementoController,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          decoration: InputDecoration(
+                            hintText: 'NUOVO ELEMENTO',
+                            hintStyle: const TextStyle(color: Colors.white70, fontSize: 14, letterSpacing: 1.1),
+                            filled: true,
+                            fillColor: Colors.black,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(5),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                          onSubmitted: (_) => _aggiungiNuovoElemento(), // Aggiunge se si preme "Invio" sulla tastiera
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.add, color: Colors.white, size: 28),
+                          onPressed: _aggiungiNuovoElemento, // Aggiunge se si clicca il bottone
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

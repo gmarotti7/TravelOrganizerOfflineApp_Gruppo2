@@ -288,7 +288,7 @@ class _AddTripState extends State<AddTrip> {
 
               Row(
                 children: [
-                  const Text('BUDGET PREVISTO: ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+                  Text('BUDGET PREVISTO (${Sessione.valutaAttuale}): ', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
                   const SizedBox(width: 10),
                   Expanded(
                     child: SizedBox(

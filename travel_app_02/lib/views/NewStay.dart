@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:travel_app_02/models/stay.dart';
 import 'package:travel_app_02/models/trip.dart'; // Importato per accedere alle date del viaggio
 import 'BottomBar.dart';
+import 'package:travel_app_02/sessione.dart';
 
 class NewStay extends StatefulWidget {
   final Trip? viaggio; // Riceve il viaggio corrente per ricavare i limiti di data
@@ -256,23 +257,23 @@ class _NewStayState extends State<NewStay> {
                 const SizedBox(height: 20),
 
                 // COSTO PREVISTO
-                const Text('COSTO PREVISTO',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+                Text('COSTO PREVISTO (${Sessione.valutaAttuale})',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
                 const SizedBox(height: 5),
                 TextFormField(
                   controller: _costoController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Inserisci il costo';
-                    }
+                    if (value == null || value.trim().isEmpty) return 'Inserisci il costo';
                     return null;
                   },
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.white,
                     contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                    suffixText: Sessione.valutaAttuale, // <-- MOSTRA VALUTA NEL CAMPO
+                    suffixStyle: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16), // <-- STILE VALUTA
                     enabledBorder: OutlineInputBorder(
                         borderSide: BorderSide(color: Colors.black, width: 2), borderRadius: BorderRadius.zero),
                     focusedBorder: OutlineInputBorder(

@@ -60,7 +60,7 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
-        email TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
         eta INTEGER NOT NULL,
         valuta TEXT NOT NULL,
         fotoProfilo TEXT

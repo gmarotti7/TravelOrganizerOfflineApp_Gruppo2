@@ -77,7 +77,7 @@ class _EditTripFieldState extends State<EditTripField> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              label.toUpperCase(),
+              isNumero ? '${label.toUpperCase()} (${Sessione.valutaAttuale})' : label.toUpperCase(),
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
             ),
             const SizedBox(height: 8),
@@ -133,14 +133,14 @@ class _EditTripFieldState extends State<EditTripField> {
                 controller: _testoController,
                 keyboardType: isNumero ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
                 inputFormatters: isNumero ? [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))] : null,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.white,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                  enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black, width: 2), borderRadius: BorderRadius.zero),
-                  focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                  suffixText: isNumero ? Sessione.valutaAttuale : null, // <-- MOSTRA VALUTA
+                  suffixStyle: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
+                  enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 2), borderRadius: BorderRadius.zero),
+                  focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
                 ),
               ),
 

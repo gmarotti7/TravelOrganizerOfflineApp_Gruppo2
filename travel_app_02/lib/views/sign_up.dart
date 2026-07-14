@@ -116,9 +116,9 @@ class _SignUp extends State<SignUp> {
   // Funzione che esegue le verifiche grafiche prima di salvare
   bool _validaCampi() {
     setState(() {
-      // Verifica della chiocciola @ nella mail al click del bottone
-      if (!_emailController.text.contains('@')) {
-        _emailError = 'La mail deve contenere una @';
+      String emailText = _emailController.text.trim();
+      if (!emailText.contains('@') || emailText.indexOf('@') == 0) {
+        _emailError = 'La mail deve contenere una @ (non all\'inizio)';
       } else {
         _emailError = null;
       }
@@ -224,7 +224,7 @@ class _SignUp extends State<SignUp> {
                         decoration: _buildInputDecoration('EMAIL', errorText: _emailError),
                         onChanged: (text) {
                           setState(() {
-                            _hasAtSymbol = text.contains('@');
+                            _hasAtSymbol = text.contains('@') && text.indexOf('@') > 0;
                             if (_hasAtSymbol && _emailError != null) {
                               _emailError = null;
                             }
@@ -383,9 +383,17 @@ class _SignUp extends State<SignUp> {
           Navigator.pushReplacementNamed(context, AppRoutes.login);
         }
       } else if (context.mounted) {
+        String messaggioVisualizzato = erroreDatabase!;
+        
+        if (messaggioVisualizzato.toLowerCase().contains('unique')) {
+          messaggioVisualizzato = 'Questo username o email è già in uso! Scegline un altro.';
+        } else {
+          messaggioVisualizzato = 'Errore di sistema: $erroreDatabase';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('ERRORE DB: $erroreDatabase'), 
+            content: Text(messaggioVisualizzato, style: const TextStyle(fontWeight: FontWeight.bold)), 
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
           ),

@@ -364,6 +364,14 @@ class _RecapTripState extends State<RecapTrip> {
                     ),
                   ),
 
+                  if (_packlist == null) ...[
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      onPressed: () => _mostraSceltaPacklist(context, trip),
+                      child: const Text("+ Scegli Packlist"),
+                    ),
+                  ],
+
                   const SizedBox(height: 16),
                   const Text("CHECKLIST", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
@@ -585,6 +593,70 @@ class _RecapTripState extends State<RecapTrip> {
   }
 
   // ---------- PACKLIST / CHECKLIST ----------
+
+  void _mostraSceltaPacklist(BuildContext context, Trip trip) {
+    showModalBottomSheet(
+      context: context,
+      builder: (bottomSheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                'Scegli una Packlist Consigliata', 
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)
+              ),
+            ),
+            ListTile(
+              title: const Text('MARE', style: TextStyle(fontWeight: FontWeight.bold)), 
+              trailing: const Icon(Icons.beach_access, color: Colors.black),
+              onTap: () { Navigator.pop(bottomSheetContext); _salvaNuovaPacklist(trip, 'MARE'); }
+            ),
+            ListTile(
+              title: const Text('MONTAGNA', style: TextStyle(fontWeight: FontWeight.bold)), 
+              trailing: const Icon(Icons.landscape, color: Colors.black),
+              onTap: () { Navigator.pop(bottomSheetContext); _salvaNuovaPacklist(trip, 'MONTAGNA'); }
+            ),
+            ListTile(
+              title: const Text('CITTÀ', style: TextStyle(fontWeight: FontWeight.bold)), 
+              trailing: const Icon(Icons.location_city, color: Colors.black),
+              onTap: () { Navigator.pop(bottomSheetContext); _salvaNuovaPacklist(trip, 'CITTÀ'); }
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _salvaNuovaPacklist(Trip trip, String titolo) async {
+    final idViaggio = int.tryParse(trip.id);
+    if (idViaggio == null) return;
+
+    Map<String, bool> oggetti;
+    switch (titolo) {
+      case 'MARE': oggetti = {'Crema solare': true, 'Ciabatte': true, 'Costume': true}; break;
+      case 'MONTAGNA': oggetti = {'Scarponi': true, 'Giacca a vento': true, 'Borraccia': true}; break;
+      case 'CITTÀ': oggetti = {'Mappa': true, 'Scarpe comode': true, 'Powerbank': true}; break;
+      default: oggetti = {};
+    }
+
+    List<Map<String, dynamic>> elementi = oggetti.entries
+        .map((e) => {'nome': e.key, 'isChecked': e.value})
+        .toList();
+
+    try {
+      await _packController.salvaPacklist(titolo, elementi, idViaggio);
+      await _caricaPacklist(); 
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Packlist "$titolo" aggiunta!'), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      _mostraErrore('Errore salvando la packlist: $e');
+    }
+  }
 
   Future<void> _apriPacklist(BuildContext context, Trip trip) async {
     final idViaggio = int.tryParse(trip.id);

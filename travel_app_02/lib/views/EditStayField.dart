@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:travel_app_02/models/stay.dart';
 import 'package:travel_app_02/controllers/stay_controller.dart';
 import 'BottomBar.dart';
+import 'package:travel_app_02/sessione.dart';
 
 class EditStayField extends StatefulWidget {
   const EditStayField({Key? key}) : super(key: key);
@@ -170,7 +171,7 @@ class _EditStayFieldState extends State<EditStayField> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              label.toUpperCase(),
+              isNumero ? '${label.toUpperCase()} (${Sessione.valutaAttuale})' : label.toUpperCase(),
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
             ),
             const SizedBox(height: 8),
@@ -191,17 +192,16 @@ class _EditStayFieldState extends State<EditStayField> {
                 filled: true,
                 fillColor: Colors.white,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-              
+                suffixText: isNumero ? Sessione.valutaAttuale : null, // <-- MOSTRA VALUTA NEL CAMPO SOLO PER I NUMERI
+                suffixStyle: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
                 suffixIcon: isData 
                     ? const Icon(Icons.calendar_month, color: Colors.black) 
                     : isOra 
                         ? const Icon(Icons.access_time, color: Colors.black) 
                         : null,
                         
-                enabledBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black, width: 2), borderRadius: BorderRadius.zero),
-                focusedBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
+                enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 2), borderRadius: BorderRadius.zero),
+                focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 3), borderRadius: BorderRadius.zero),
               ),
             ),
 
