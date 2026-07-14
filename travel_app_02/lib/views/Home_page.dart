@@ -25,11 +25,7 @@ class _HomePageState extends State<HomePage> {
   DateTime? _selectedDate;
 
   // Lista simulata di viaggi (Database temporaneo per presentazione)
-  final List<Trip> _tuttiIViaggi = [
-    Trip(titolo: 'Vacanze Romane', luogo: 'Roma', dataInizio: DateTime(2026, 07, 01), id: '0001', dataFine: DateTime(2026, 07, 09), budgetPrevisto: 500), 
-    Trip(titolo: 'Vacanze Estive', luogo: 'Barcellona', dataInizio: DateTime(2026, 07, 10), id: '0002', dataFine: DateTime(2026, 07, 20), budgetPrevisto: 800), 
-    Trip(titolo: 'Weekend in Montagna', luogo: 'Trento', dataInizio: DateTime(2026, 07, 22), id: '0003', dataFine: DateTime(2026, 07, 31), budgetPrevisto: 400), 
-  ];
+  final List<Trip> _tuttiIViaggi = [];
 
   // Lista che contiene i viaggi filtrati da mostrare sulla UI
   List<Trip> _viaggiFiltrati = [];
@@ -52,22 +48,24 @@ class _HomePageState extends State<HomePage> {
     if (Sessione.idUtenteAttuale != null) {
       try {
         List<Trip> viaggiDb = await _controller.caricaViaggiUtente(Sessione.idUtenteAttuale!);
-      
-        bool haViaggiDiProva = viaggiDb.any((v) => v.titolo == 'Vacanze Romane');
+        bool haVistoEsempi = viaggiDb.any((v) => v.titolo == '___FLAG_ESEMPI___');
 
-        if (!haViaggiDiProva) {
+        if (!haVistoEsempi) {
           await _controller.salvaNuovoViaggio(
-            Trip(id: '', titolo: 'Vacanze Romane', luogo: 'Roma', dataInizio: DateTime(2026, 07, 01), dataFine: DateTime(2026, 07, 09), budgetPrevisto: 500),
+            Trip(id: '', titolo: 'Weekend a Londra', luogo: 'Londra', dataInizio: DateTime(2025, 11, 15), dataFine: DateTime(2025, 11, 20), budgetPrevisto: 450),
             Sessione.idUtenteAttuale!
           );
+          
           await _controller.salvaNuovoViaggio(
-            Trip(id: '', titolo: 'Vacanze Estive', luogo: 'Barcellona', dataInizio: DateTime(2026, 07, 10), dataFine: DateTime(2026, 07, 20), budgetPrevisto: 800),
+            Trip(id: '', titolo: 'Vacanze in Sardegna', luogo: 'Cagliari', dataInizio: DateTime(2026, 07, 10), dataFine: DateTime(2026, 07, 24), budgetPrevisto: 1200),
             Sessione.idUtenteAttuale!
           );
+          
           await _controller.salvaNuovoViaggio(
-            Trip(id: '', titolo: 'Weekend in Montagna', luogo: 'Trento', dataInizio: DateTime(2026, 07, 22), dataFine: DateTime(2026, 07, 31), budgetPrevisto: 400),
+            Trip(id: '', titolo: '___FLAG_ESEMPI___', luogo: 'Nessun Luogo', dataInizio: DateTime(2000, 1, 1), dataFine: DateTime(2000, 1, 1), budgetPrevisto: 0),
             Sessione.idUtenteAttuale!
           );
+
           viaggiDb = await _controller.caricaViaggiUtente(Sessione.idUtenteAttuale!);
         }
 
@@ -75,7 +73,8 @@ class _HomePageState extends State<HomePage> {
 
         setState(() {
           _tuttiIViaggi.clear();
-          _tuttiIViaggi.addAll(viaggiDb); 
+          
+          _tuttiIViaggi.addAll(viaggiDb.where((v) => v.titolo != '___FLAG_ESEMPI___')); 
 
           _viaggiFiltrati = List.from(_tuttiIViaggi);
           _applicaFiltri(); 
