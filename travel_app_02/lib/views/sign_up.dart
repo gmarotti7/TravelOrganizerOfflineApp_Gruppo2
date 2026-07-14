@@ -137,7 +137,7 @@ class _SignUp extends State<SignUp> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromRGBO(225, 193, 7, 1), // Giallo ocra
+      backgroundColor: Color.fromRGBO(255, 193, 7, 1), // Giallo ocra
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
